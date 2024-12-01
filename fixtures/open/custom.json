@@ -1,0 +1,37 @@
+{
+  "apis": [
+    {
+      "method": "POST",
+      "path": "web/info/",
+      "response": {
+        "code": 201,
+        "json": {"results": []},
+        "headers": {}
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "web/info/",
+      "response": {
+        "code": 200,
+        "text": "success",
+        "headers": {}
+      }
+    },
+    {
+      "method": "get",
+      "path": "web/enums/",
+      "response": {
+        "code": 200,
+        "data": [1, 2]
+      }
+    },
+    {
+      "method": "HEAD",
+      "path": "web/enums/",
+      "response": {
+        "code": 404
+      }
+    }
+  ]
+}
