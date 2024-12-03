@@ -1,5 +1,6 @@
+import { validateSubmitData } from "./validator.js";
 import * as utils from "./utils.js";
-const { logger } = utils;
+import logger from "./logger.js";
 
 const FIELD_SEPARATOR = "__";
 
@@ -183,12 +184,9 @@ export const compareValueByLookup = (value, lookup, targetValue) => {
 export const handleFilterRows = (query, rows, filterFields, searchFields) => {
   // 初始化 filters
   const filters = [];
-  const fields = Object.keys(filterFields || {});
-  for (let i = 0; i < fields.length; i++) {
-    const fieldName = fields[i];
+  for (let fieldName in filterFields) {
     const lookups = filterFields[fieldName] || [];
-    for (let j = 0; j < lookups.length; j++) {
-      const lookup = lookups[j];
+    for (let lookup of lookups) {
       let value = query[`${fieldName}${FIELD_SEPARATOR}${lookup}`];
       if (value === undefined && lookup === "exact") {
         value = query[fieldName];
@@ -200,8 +198,8 @@ export const handleFilterRows = (query, rows, filterFields, searchFields) => {
     }
   }
   let results = rows.filter(row => {
-    for (let i = 0; i < filters.length; i++) {
-      const { fieldName, lookup, targetValue } = filters[i];
+    for (let item of filters) {
+      const { fieldName, lookup, targetValue } = item;
       try {
         const value = findRowValueByFieldName(row, fieldName);
         const isMatch = compareValueByLookup(value, lookup, targetValue);
@@ -218,8 +216,7 @@ export const handleFilterRows = (query, rows, filterFields, searchFields) => {
     // 处理 searchFields
     const { search } = query;
     if (!utils.isEmpty(search) && utils.isArray(searchFields)) {
-      for (let i = 0; i < searchFields.length; i++) {
-        const fieldName = searchFields[i];
+      for (let fieldName of searchFields) {
         try {
           const value = findRowValueByFieldName(row, fieldName);
           const isMatch = compareValueByLookup(value, "contains", search);
@@ -284,7 +281,7 @@ export const handleSortRows = (rows, ordering, orderingFields) => {
 };
 
 export const queryRows = (query, config) => {
-  const { filter_fields: filterFields, search_fields: searchFields, ordering: defaultOrdering, ordering_fields: orderingFields, pk_field: pkField = "id", rows } = config;
+  const { filter_fields: filterFields, search_fields: searchFields, ordering: defaultOrdering, ordering_fields: orderingFields, rows } = config;
   // 刷选 + 搜索
   let results = handleFilterRows(query, rows, filterFields, searchFields);
   // 排序
@@ -302,12 +299,12 @@ export const findRowByPk = (pkValue, query, config) => {
   return row;
 };
 
-
 export const initRestfulResponse = (req, filePath, route) => {
   let response = {};
 
   const { query } = req;
   const { config } = global.jsonConfig[filePath] || {};
+  const { pk_field: pkField, rows, rules, page_size: defaultSize } = config;
   if (req.path === route.restful) {
     switch (req.method) {
       case "GET": {
@@ -315,7 +312,7 @@ export const initRestfulResponse = (req, filePath, route) => {
         const results = queryRows(query, config);
         // 分页
         const page = Number(query.page || 1);
-        const pageSize = Number(query.page_size || config.page_size || 20);
+        const pageSize = Number(query.page_size || defaultSize || 20);
         const pageRows = results.slice((page - 1) * pageSize, page * pageSize);
         response = { json: { count: results.length, results: pageRows } };
         break;
@@ -323,19 +320,24 @@ export const initRestfulResponse = (req, filePath, route) => {
       case "POST": {
         // 创建
         const row = req.body;
-        const { pk_field: pkField, rows } = config;
-        if (utils.isNull(row[pkField])) {
-          // 没有pk，自动生成一个
-          const pks = rows.map(item => item[pkField]).filter(v => v && utils.isNumber(v));
-          let last = 1;
-          if (pks.length > 0) {
-            pks.sort(); // 排序
-            last = pks[pks.length -1];
+        try {
+          validateSubmitData(row, rules);
+          if (utils.isNull(row[pkField])) {
+            // 没有pk，自动生成一个
+            const pks = rows.map(item => item[pkField]).filter(v => v && utils.isNumber(v));
+            let last = 1;
+            if (pks.length > 0) {
+              pks.sort(); // 排序
+              last = pks[pks.length - 1];
+            }
+            row[pkField] = Number(last) + 1;
           }
-          row[pkField] = Number(last) + 1;
+          rows.append(row);
+          response = { json: row, code: 201 };
+        } catch (err) {
+          logger.error(err);
+          response = { json: { detail: err.message }, code: 400 };
         }
-        rows.append(row);
-        response = { json: row, code: 201 };
         break;
       }
       default: {
@@ -358,15 +360,21 @@ export const initRestfulResponse = (req, filePath, route) => {
         case "PATCH": {
           // 更新
           const data = req.body || {};
-          Object.keys(data).forEach(key => {
-            row[key] = data[key];
-          });
-          response = { json: row, code: 200 };
+          const partial = req.method === "PATCH";
+          try {
+            validateSubmitData(data, rules, partial);
+            for (let key in data) {
+              row[key] = data[key];
+            }
+            response = { json: row, code: 200 };
+          } catch (err) {
+            logger.error(err);
+            response = { json: { detail: err.message }, code: 400 };
+          }
           break;
         }
         case "DELETE": {
           // 删除
-          const { pk_field: pkField, rows } = config;
           config.rows = rows.filter(item => item[pkField] == row[pkField]);
           response = { json: row, code: 204 };
           break;

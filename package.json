@@ -27,10 +27,10 @@
     "upload-cov": "coveralls < .coverage/lcov.info"
   },
   "dependencies": {
-    "express": "~4.21.1",
+    "express": "^4.21.1",
+    "joi": "^17.13.3",
     "morgan": "^1.10.0",
-    "url-join": "^5.0.0",
-    "winston": "~3.17.0"
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@babel/core": "~7.24.4",

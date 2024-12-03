@@ -1,8 +1,11 @@
-import urlJoin from "url-join";
+import path from "path";
+import { dirname } from "node:path";
+import { join as pathJoin } from "node:path/posix";
 import express from "express";
 import morgan from "morgan";
 
-import { logger, isNull } from "./utils.js";
+import { isNull } from "./utils.js";
+import logger from "./logger.js";
 import { initRestfulResponse } from "./handler.js";
 
 const initApp = option => {
@@ -18,12 +21,9 @@ const initApp = option => {
 
   // 若是有多个相同的 method+path，后面的无效
   // 遍历所有配置初始化app的路由
-  const filePaths = Object.keys(global.jsonConfig);
-  for (let i = 0; i <= filePaths.length; i++) {
-    const filePath = filePaths[i];
+  for (let filePath in global.jsonConfig) {
     const { routes } = global.jsonConfig[filePath] || {};
-    for (let j = 0; j < routes?.length; j++) {
-      const route = routes[j];
+    for (let route of routes || []) {
       const { method, path: reqPath, restful, response } = route;
       // 判断method是否支持
       const _method = method.toLowerCase();
@@ -33,23 +33,31 @@ const initApp = option => {
         continue;
       }
       // 添加路由到app上
-      const _path = urlJoin(pathPrefix, reqPath);
+      const _path = pathJoin(pathPrefix, reqPath);
       logger.debug(`app add route  ${_method.padEnd(8, " ")} ${_path}`);
       app[_method](_path, (req, res) => {
         logger.info(`${req.method} ${req.path}\nquery: ${JSON.stringify(req.query, null, " ")}\nbody: ${JSON.stringify(req.body)}`);
         let respConf = response || {};
         if (restful) {
           // 处理restful接口
-          // respConf = initRestfulResponse(req, filePath, route);
+          respConf = initRestfulResponse(req, filePath, route);
         }
         const { code = 200, headers, json, file, text = null } = respConf;
         // 处理 headers
-        Object.keys(headers || {}).forEach(key => res.set(key, headers[key]));
+        for (let key in headers) {
+          res.set(key, headers[key]);
+        }
         // 处理不同返回格式
         if (json) {
           res.status(code).json(json);
         } else if (file) {
-          res.status(code).sendFile(file);
+          if (file.startswith("/")) {
+            // 绝对路径
+            res.status(code).sendFile(file);
+          } else {
+            // 相对配置文件的路径
+            res.status(code).sendFile(path.join(dirname(filePath), file));
+          }
         } else {
           res.status(code).send(text);
         }

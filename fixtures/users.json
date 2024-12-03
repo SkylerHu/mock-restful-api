@@ -16,15 +16,15 @@
   "ordering_fields": ["id"],
   "ordering": ["-id"],
   "pk_field": "id",
-  "rules": [
-    { "name": "username", "type": "string", "pattern": "/\\w+/", "required": true },
-    { "name": "nickname", "type": "string", "max": 32, "required": false, "allow_blank": true, "allow_null": false },
-    { "name": "is_active", "type": "boolean" },
-    { "name": "age", "type": "integer", "min": 0, "max": 100 },
-    { "name": "gender", "type": "string", "choices": ["male", "female"] },
-    { "name": "score", "type": "float", "min": 0, "max": 100 },
-    { "name": "created_at", "type": "date", "format": "YYYY-MM-DD HH:mm:ss" }
-  ],
+  "rules": {
+    "username": { "type": "string", "pattern": "/\\w+/", "required": true },
+    "nickname": { "type": "string", "max": 32, "required": false },
+    "is_active": { "type": "boolean" },
+    "age": { "type": "integer", "min": 0, "max": 100 },
+    "gender": { "type": "string", "valid": ["male", "female"] },
+    "score": { "type": "float", "min": 0, "max": 100 },
+    "created_at": { "type": "date" }
+  },
   "rows": [
     {
       "id": 1,
@@ -100,6 +100,16 @@
       "response": {
         "json": { "message": "success" },
         "headers": {}
+      }
+    }
+  ],
+  "apis": [
+    {
+      "method": "get",
+      "path": "web/enums/",
+      "response": {
+        "code": 200,
+        "data": [1, 2]
       }
     }
   ]

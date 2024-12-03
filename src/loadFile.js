@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
-import urlJoin from "url-join";
+import { join as pathJoin } from "node:path/posix";
 
-import { logger } from "./utils.js";
+import logger from "./logger.js";
 
 global.jsonConfig = {
   // 格式示例
@@ -16,7 +16,7 @@ global.jsonConfig = {
  * 递归获取目录下所有json文件
  * @param {string} filePath 可以是目录也可以是文件
  */
-const getJsonFileList = filePath => {
+export const getJsonFileList = filePath => {
   let allFilePaths = [];
   const stats = fs.lstatSync(filePath);
   if (stats.isFile()) {
@@ -42,16 +42,12 @@ const getJsonFileList = filePath => {
  * @param {string} filePath 必须是文件路径
  * @returns
  */
-const loadFileContent = filePath => {
+export const loadFileContent = filePath => {
   let config;
   try {
     const stats = fs.statSync(filePath);
-    if (stats.isDirectory()) {
-      logger.warn(`The filePath is directory: ${filePath}`);
-      return;
-    }
     if (!stats.isFile()) {
-      logger.warn(`The file does not exist or has been deleted: ${filePath}`);
+      logger.warn(`The filePath is not a file or has been deleted: ${filePath}`);
       return;
     }
     const content = fs.readFileSync(filePath, "utf8");
@@ -69,7 +65,7 @@ const loadFileContent = filePath => {
  * 校验路由配置数据
  * @param {Object} route
  */
-const validateRoute = route => {
+export const validateRoute = route => {
   const { restful, method, path } = route;
   if (!restful) {
     if (!method) {
@@ -79,19 +75,16 @@ const validateRoute = route => {
       throw Error(`"path" cannot be empty`);
     }
   }
-  const filePaths = Object.keys(global.jsonConfig);
-  for (let i = 0; i <= filePaths.length; i++) {
-    const filePath = filePaths[i];
-    const { config, routes } = global.jsonConfig[filePath] || {};
+  for (let filePath in global.jsonConfig) {
+    const { config, routes } = global.jsonConfig[filePath];
     if (restful && restful === config?.restful) {
       // restful接口重复
       throw Error(`The restful interface already exists in ${filePath}: restful=${restful}`);
     }
-    for (let j = 0; j < routes?.length; j++) {
-      const _route = routes[j];
-      if (method.toLowerCase() === _route.method.toLowerCase() && path === _route.path) {
+    for (let item of routes) {
+      if (method.toLowerCase() === item.method.toLowerCase() && path === item.path) {
         // 其他接口重复
-        throw Error(`The current path already exists in ${filePath}: method=${method} path=${path}`);
+        throw Error(`The current method+path already exists in ${filePath}: method=${method} path=${path}`);
       }
     }
   }
@@ -102,15 +95,18 @@ const validateRoute = route => {
  * @param {string} filePath
  * @param {Object} route
  */
-const appendRoute = (filePath, route) => {
+export const appendRoute = (filePath, route) => {
+  const { method, path: urlPath } = route;
   try {
     validateRoute(route);
     global.jsonConfig[filePath].routes.push(route);
-    logger.debug(`config add route  ${route.method.padEnd(8, " ")}${route.path}`);
+    logger.debug(`config add route  ${route.method.padEnd(8, " ")}${urlPath}`);
+    return true;
   } catch (err) {
     logger.error(err);
-    logger.error(`append route fail: ${filePath} method=${route.method} path=${route.path}`);
+    logger.error(`append route fail: ${filePath} method=${method} path=${urlPath}`);
   }
+  return false;
 };
 
 /**
@@ -141,7 +137,7 @@ export const loadFileToConfig = filePath => {
     // 判断是否要添加斜线后缀
     const appendSlash = restful.endsWith("/") ? "/" : "";
     // pk_field 不仅仅是递增的数字，可能使用其他的例如uuid
-    const detailUrl = urlJoin(restful, "([\\w-]+)", appendSlash);
+    const detailUrl = pathJoin(restful, "([\\w-]+)", appendSlash);
     // 添加restful接口操作
     const baseRoute = { restful };
     const initRoutes = [
@@ -157,7 +153,7 @@ export const loadFileToConfig = filePath => {
     (actions || []).forEach(action => {
       const item = {
         method: action.method.toLowerCase(),
-        path: urlJoin(action.detail ? detailUrl : restful, action.url_path),
+        path: pathJoin(action.detail ? detailUrl : restful, action.url_path),
         response: action.response,
       };
       appendRoute(filePath, item);
@@ -175,11 +171,8 @@ export const loadFileToConfig = filePath => {
  * @returns
  */
 export const initJsonFiles = filePath => {
-  let routes = [];
   const files = getJsonFileList(filePath);
-  for (let i = 0; i < files.length; i++) {
-    const jsonFile = files[i];
+  for (let jsonFile of files) {
     loadFileToConfig(jsonFile);
   }
-  return routes;
 };

@@ -32,6 +32,26 @@
       "response": {
         "code": 404
       }
+    },
+    {
+      "method": "get",
+      "path": "web/download/",
+      "response": {
+        "code": 200,
+        "file": "./test.txt"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "method": "POST",
+      "url_path": "create/",
+      "detail": false,
+      "response": {
+        "code": 201,
+        "json": { "message": "success" },
+        "headers": {}
+      }
     }
   ]
 }

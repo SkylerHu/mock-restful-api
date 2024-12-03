@@ -1,4 +1,4 @@
-import { logger } from "./utils.js";
+import logger from "./logger.js";
 import initApp from "./app.js";
 import { initJsonFiles } from "./loadFile.js";
 
