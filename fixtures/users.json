@@ -4,7 +4,7 @@
   "filter_fields": {
     "id": ["exact", "in"],
     "username": ["exact", "in", "contains", "startswith", "endswith", "regex"],
-    "is_active": true,
+    "is_active": ["exact"],
     "age": ["exact", "range", "lt", "lte", "gt", "gte"],
     "gender": ["exact", "in", "isnull"],
     "created_at": ["range"],

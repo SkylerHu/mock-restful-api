@@ -32,24 +32,17 @@ describe("test load file", () => {
   });
 
   test("test validate rote", () => {
-    expect(() => loadFile.validateRoute({})).toThrow(/"method" cannot be empty/);
-    expect(() => loadFile.validateRoute({ method: "get" })).toThrow(/"path" cannot be empty/);
+    expect(() => loadFile.validateRoute({}, global.jsonConfig)).toThrow(/"method" cannot be empty/);
+    expect(() => loadFile.validateRoute({ method: "get" }, global.jsonConfig)).toThrow(/"path" cannot be empty/);
 
     // 加载文件
     loadFile.loadFileToConfig(TEST_RESTFUL_FILE);
     const { config, routes } = global.jsonConfig[TEST_RESTFUL_FILE];
     expect(routes).toHaveLength(9);
     const { restful } = config;
-    expect(() => loadFile.validateRoute({ restful })).toThrow(/The restful interface already exists/);
+    expect(() => loadFile.validateRoute({ restful }, global.jsonConfig)).toThrow(/The restful interface already exists/);
     const route = routes[routes.length - 1];
-    expect(() => loadFile.validateRoute(route)).toThrow(/method\+path already exists/);
-
-    expect(loadFile.appendRoute(TEST_FILE_PATH, route)).toBeFalsy();
-    expect(logger.error).toHaveBeenCalled();
-
-    const { routes: routes2 } = global.jsonConfig[TEST_RESTFUL_FILE];
-    expect(routes2).toHaveLength(9);
-
+    expect(() => loadFile.validateRoute(route, global.jsonConfig)).toThrow(/method\+path already exists/);
   });
   test("test load file to config", () => {
     loadFile.loadFileToConfig(TEST_RESTFUL_FILE);

@@ -19,6 +19,10 @@ const initApp = option => {
   app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
   app.use(morgan("dev")); // 配置输入日志格式
 
+  // app.get("/web/users/", (req, res) => {
+  //   res.status(200).json(req.query);
+  // });
+
   // 若是有多个相同的 method+path，后面的无效
   // 遍历所有配置初始化app的路由
   for (let filePath in global.jsonConfig) {
@@ -34,7 +38,7 @@ const initApp = option => {
       }
       // 添加路由到app上
       const _path = pathJoin(pathPrefix, reqPath);
-      logger.debug(`app add route  ${_method.padEnd(8, " ")} ${_path}`);
+      logger.info(`app add route  ${_method.padEnd(8, " ")} ${_path}`);
       app[_method](_path, (req, res) => {
         logger.info(`${req.method} ${req.path}\nquery: ${JSON.stringify(req.query, null, " ")}\nbody: ${JSON.stringify(req.body)}`);
         let respConf = response || {};

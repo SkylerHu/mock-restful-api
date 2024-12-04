@@ -304,9 +304,10 @@ export const initRestfulResponse = (req, filePath, route) => {
 
   const { query } = req;
   const { config } = global.jsonConfig[filePath] || {};
+  const { detail } = route;
   const { pk_field: pkField, rows, rules, page_size: defaultSize } = config;
-  if (req.path === route.restful) {
-    switch (req.method) {
+  if (!detail) {
+    switch (req.method.toUpperCase()) {
       case "GET": {
         // 列表
         const results = queryRows(query, config);
