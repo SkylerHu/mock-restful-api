@@ -5,7 +5,7 @@ export const isEmpty = value => isNull(value) || value === "";
 
 export const isArray = value => value instanceof Array;
 
-export const isDict = value => typeof value === "object";
+export const isDict = value => typeof value === "object" && !isArray(value);
 
 export const isBooleanTrue = value => ["true", "True", "1", 1, true].includes(value);
 

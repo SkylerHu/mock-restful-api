@@ -27,7 +27,7 @@ describe("test load file", () => {
     expect(logger.warn).toHaveBeenCalled();
     expect(logger.warn).toHaveBeenCalledWith(expect.stringMatching(/The filePath is not a file/));
     expect(loadFile.loadFileContent("fixtures/open/text.txt")).toBeUndefined();
-    expect(logger.error).toHaveBeenCalledTimes(2);
+    expect(logger.error).toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith(expect.stringMatching(/load file fail/));
   });
 
@@ -65,5 +65,38 @@ describe("test load file", () => {
       allRoutes = allRoutes.concat(routes);
     }
     expect(allRoutes).toHaveLength(19);
+  });
+});
+
+describe("test validate config", () => {
+  test("test validate config fail", () => {
+    expect(() => loadFile.validateConfig([])).toThrow(/must be a dict/);
+    expect(() => loadFile.validateConfig({ page_size: "1" })).toThrow(/must be a int/);
+    expect(() => loadFile.validateConfig({ page_size: -1 })).toThrow(/greater than 0/);
+    expect(() => loadFile.validateConfig({ filter_fields: [] })).toThrow(/must be a dict/);
+    expect(() => loadFile.validateConfig({ filter_fields: { test: "test" } })).toThrow(/values can only be set arrays/);
+    expect(() => loadFile.validateConfig({ search_fields: {} })).toThrow(/must be a array/);
+    expect(() => loadFile.validateConfig({ ordering_fields: {} })).toThrow(/must be a array/);
+    expect(() => loadFile.validateConfig({ ordering: {} })).toThrow(/must be a array/);
+    expect(() => loadFile.validateConfig({ pk_field: 1 })).toThrow(/must be a string/);
+    expect(() => loadFile.validateConfig({ rules: [] })).toThrow(/must be a dict/);
+    expect(() => loadFile.validateConfig({ rules: { test: [] } })).toThrow(/values can only be set dict/);
+    expect(() => loadFile.validateConfig({ rules: { test: {} } })).toThrow(/value must have a "type"/);
+    expect(() => loadFile.validateConfig({ rows: {} })).toThrow(/must be a array/);
+    expect(() => loadFile.validateConfig({ rows: [1, 2] })).toThrow(/item value must be a dict/);
+    expect(() => loadFile.validateConfig({ actions: {} })).toThrow(/must be a array/);
+    expect(() => loadFile.validateConfig({ actions: [1] })).toThrow(/item value must be a dict/);
+    expect(() => loadFile.validateConfig({ actions: [{}] })).toThrow(/item value must have a "method"/);
+    expect(() => loadFile.validateConfig({ actions: [{ method: "GET" }] })).toThrow(/item value must have a "url_path"/);
+    expect(() => loadFile.validateConfig({ apis: {} })).toThrow(/must be a array/);
+    expect(() => loadFile.validateConfig({ apis: [1] })).toThrow(/item value must be a dict/);
+    expect(() => loadFile.validateConfig({ apis: [{}] })).toThrow(/item value must have a "method"/);
+    expect(() => loadFile.validateConfig({ apis: [{ method: "GET" }] })).toThrow(/item value must have a "path"/);
+  });
+
+  test("test load file validate fail", () => {
+    expect(loadFile.genConfigToRoutes("fixtures/illegal.json.txt")).toBeUndefined();
+    expect(logger.error).toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(expect.stringMatching(/The file content is illegal/));
   });
 });

@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { join as pathJoin } from "node:path/posix";
-
+import * as utils from "./utils.js";
 import logger from "./logger.js";
 
 global.jsonConfig = {
@@ -55,10 +55,108 @@ export const loadFileContent = filePath => {
     // logger.debug(`load file success: ${filePath}`);
     config["file_path"] = filePath;
   } catch (err) {
-    logger.error(err);
-    logger.error(`load file fail: ${filePath}`);
+    logger.error(`load file fail: ${filePath} ${err}`);
   }
   return config;
+};
+
+export const validateConfig = config => {
+  if (!utils.isDict(config)) {
+    throw Error("The api json file content must be a dict");
+  }
+  const { page_size, filter_fields, search_fields, ordering_fields, ordering, pk_field, rules, rows, actions, apis } = config;
+  if (page_size !== undefined) {
+    if (!Number.isInteger(page_size) || page_size <= 0) {
+      throw Error(`The "page_size" must be a int and greater than 0, "${page_size}" illegal.`);
+    }
+  }
+  if (filter_fields !== undefined) {
+    if (!utils.isDict(filter_fields)) {
+      throw Error(`The "filter_fields" must be a dict.`);
+    }
+    for (let key in filter_fields) {
+      const lookups = filter_fields[key];
+      if (!utils.isArray(lookups)) {
+        throw Error(`The "filter_fields" values can only be set arrays. eg: {"${key}": ["exact", "in"]}`);
+      }
+    }
+  }
+  if (search_fields !== undefined) {
+    if (!utils.isArray(search_fields)) {
+      throw Error(`The "search_fields" must be a array. eg: ["name", "desc"]`);
+    }
+  }
+  if (ordering_fields !== undefined) {
+    if (!utils.isArray(ordering_fields)) {
+      throw Error(`The "ordering_fields" must be a array. eg: ["name", "desc"]`);
+    }
+  }
+  if (ordering !== undefined) {
+    if (!utils.isArray(ordering)) {
+      throw Error(`The "ordering" must be a array. eg: ["-id", "+name"]`);
+    }
+  }
+  if (pk_field !== undefined) {
+    if (!utils.isString(pk_field)) {
+      throw Error(`The "pk_field" must be a string, "${pk_field}" illegal.`);
+    }
+  }
+  if (rules !== undefined) {
+    if (!utils.isDict(rules)) {
+      throw Error(`The "rules" must be a dict.`);
+    }
+    for (let key in rules) {
+      const rule = rules[key];
+      if (!utils.isDict(rule)) {
+        throw Error(`The "rules" values can only be set dict. eg: {"${key}": {"type": "string"}}`);
+      }
+      if (utils.isEmpty(rule.type)) {
+        throw Error(`The rules configuration item value must have a "type".`);
+      }
+    }
+  }
+  if (rows !== undefined) {
+    if (!utils.isArray(rows)) {
+      throw Error(`The "rows" must be a array.`);
+    }
+    for (let row of rows) {
+      if (!utils.isDict(row)) {
+        throw Error(`The "rows" configuration item value must be a dict.`);
+      }
+    }
+  }
+  if (actions !== undefined) {
+    if (!utils.isArray(actions)) {
+      throw Error(`The "actions" must be a array.`);
+    }
+    for (let action of actions) {
+      if (!utils.isDict(action)) {
+        throw Error(`The "actions" configuration item value must be a dict.`);
+      }
+      if (utils.isNull(action.method)) {
+        throw Error(`The "actions" item value must have a "method".`);
+      }
+      if (utils.isNull(action.url_path)) {
+        throw Error(`The "actions" item value must have a "url_path".`);
+      }
+    }
+  }
+  if (apis !== undefined) {
+    if (!utils.isArray(apis)) {
+      throw Error(`The "apis" must be a array.`);
+    }
+    for (let api of apis) {
+      if (!utils.isDict(api)) {
+        throw Error(`The "apis" configuration item value must be a dict.`);
+      }
+      if (utils.isNull(api.method)) {
+        throw Error(`The "apis" item value must have a "method".`);
+      }
+      if (utils.isNull(api.path)) {
+        throw Error(`The "apis" item value must have a "path".`);
+      }
+    }
+  }
 };
 
 /**
@@ -66,9 +164,15 @@ export const loadFileContent = filePath => {
  * @param {string} filePath
  * @returns
  */
-export const loadFileGenRoutes = filePath => {
+export const genConfigToRoutes = filePath => {
   const config = loadFileContent(filePath);
   if (!config) {
+    return;
+  }
+  try {
+    validateConfig(config);
+  } catch (err) {
+    logger.error(`The file content is illegal: ${filePath} ${err}`);
     return;
   }
   // 重置该文件配置
@@ -142,7 +246,7 @@ export const loadFileToConfig = filePath => {
     logger.debug(`delete old config: ${filePath}`);
     delete global.jsonConfig[filePath];
   }
-  const data = loadFileGenRoutes(filePath);
+  const data = genConfigToRoutes(filePath);
   if (!data) {
     logger.error(`load config fail: ${filePath}`);
     return;
@@ -152,14 +256,13 @@ export const loadFileToConfig = filePath => {
 
   const fileConfig = { config, routes: [] };
   for (let route of routes) {
-    const { method, path: urlPath } = route;
+    const { path: urlPath } = route;
     try {
       validateRoute(route, global.jsonConfig);
       fileConfig.routes.push(route);
       logger.debug(`config add route  ${route.method.padEnd(8, " ")}${urlPath}`);
     } catch (err) {
-      logger.error(err);
-      logger.error(`append route fail: ${filePath} method=${method} path=${urlPath}`);
+      logger.error(`append route fail: ${filePath} ${err}`);
     }
   }
   global.jsonConfig[filePath] = fileConfig;
