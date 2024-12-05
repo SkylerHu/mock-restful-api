@@ -1,5 +1,16 @@
 import Joi from "joi";
 import * as utils from "./utils.js";
+import logger from "./logger.js";
+import { LookupEnum, ALLOW_METHODS } from "./enums.js";
+
+export const handleValidateResult = result => {
+  if (result.error) {
+    result.error.details.forEach(err => {
+      logger.error(`${err.type}: ${err.message}`);
+    });
+    throw Error(result.error.details);
+  }
+};
 
 const buildJoiSchema = rules => {
   let schema = {};
@@ -29,7 +40,6 @@ const buildJoiSchema = rules => {
   return Joi.object(schema);
 };
 
-
 export const validateSubmitData = (data, rules, partial = false) => {
   if (!utils.isDict(rules) || Object.keys(rules).length === 0) {
     return true;
@@ -47,8 +57,44 @@ export const validateSubmitData = (data, rules, partial = false) => {
   }
   const joiSchema = buildJoiSchema(myRules);
   const result = joiSchema.validate(data);
-  if (result.error) {
-    throw Error(result.error.details);
-  }
+  handleValidateResult(result);
+  return result;
+};
+
+export const validateConfig = data => {
+  const schema = Joi.object({
+    restful: Joi.string(),
+    page_size: Joi.number().min(1).integer(),
+    filter_fields: Joi.object().pattern(Joi.string(), Joi.array().items(Joi.string().valid(...LookupEnum.map(member => member.value)))),
+    search_fields: Joi.array().items(Joi.string()),
+    ordering_fields: Joi.array().items(Joi.string()),
+    ordering: Joi.array().items(Joi.string()),
+    pk_field: Joi.string(),
+    rules: Joi.object().pattern(Joi.string(), Joi.object({ type: Joi.string().required() }).unknown()),
+    rows: Joi.array().items(Joi.object()),
+    actions: Joi.array().items(
+      Joi.object({
+        method: Joi.string().valid(...ALLOW_METHODS),
+        url_path: Joi.string(),
+        detail: Joi.boolean(),
+        response: Joi.object({
+          code: Joi.number().min(1).integer(),
+          headers: Joi.object().pattern(Joi.string(), Joi.string()),
+          json: Joi.alternatives().try(Joi.object(), Joi.array()),
+          file: Joi.string(),
+          text: Joi.string(),
+        }),
+      })
+    ),
+    apis: Joi.array().items(
+      Joi.object({
+        method: Joi.string().valid(...ALLOW_METHODS),
+        path: Joi.string(),
+        response: Joi.object(),
+      })
+    ),
+  }).unknown();
+  const result = schema.validate(data);
+  handleValidateResult(result);
   return result;
 };

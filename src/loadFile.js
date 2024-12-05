@@ -3,6 +3,7 @@ import path from "path";
 import { join as pathJoin } from "node:path/posix";
 import * as utils from "./utils.js";
 import logger from "./logger.js";
+import { validateConfig } from "./validator.js";
 
 global.jsonConfig = {
   // 格式示例
@@ -60,7 +61,7 @@ export const loadFileContent = filePath => {
   return config;
 };
 
-export const validateConfig = config => {
+export const validateConfigV2 = config => {
   if (!utils.isDict(config)) {
     throw Error("The api json file content must be a dict");
   }

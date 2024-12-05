@@ -1,6 +1,7 @@
 import { validateSubmitData } from "./validator.js";
 import * as utils from "./utils.js";
 import logger from "./logger.js";
+import { LookupEnum, MethodEnum } from "./enums.js";
 
 const FIELD_SEPARATOR = "__";
 
@@ -88,7 +89,7 @@ export const compareValueByLookup = (value, lookup, targetValue) => {
     // 无目标，则默认匹配
     return true;
   }
-  if (value === undefined && lookup !== "isnull") {
+  if (value === undefined && lookup !== LookupEnum.IS_NULL) {
     // isnull特殊； 其他值未定义的情况，一律匹配失败
     return false;
   }
@@ -100,13 +101,13 @@ export const compareValueByLookup = (value, lookup, targetValue) => {
   // 转换需要的类型
   let success = false;
   switch (lookup) {
-    case "exact": {
+    case LookupEnum.EXACT: {
       targetValue = transTargetValueType(value, targetValue);
       // 不用 ===，query中解析出来的数字是字符串，兼容 1 == "1"
       success = value == targetValue;
       break;
     }
-    case "isnull": {
+    case LookupEnum.IS_NULL: {
       if (utils.isBooleanTrue(targetValue)) {
         success = utils.isNull(value);
       } else if (utils.isBooleanFalse(targetValue)) {
@@ -116,29 +117,29 @@ export const compareValueByLookup = (value, lookup, targetValue) => {
       }
       break;
     }
-    case "in": {
+    case LookupEnum.IN: {
       // 用 == 为了兼容 1 == "1" 的场景
       targetValue = parseCsvValue(targetValue);
       success = utils.isArray(targetValue) && targetValue.filter(v => v == value).length > 0;
       break;
     }
-    case "startswith": {
+    case LookupEnum.STARTSWITH: {
       success = utils.isString(value) && value.startsWith(String(targetValue));
       break;
     }
-    case "endswith": {
+    case LookupEnum.ENDSWITH: {
       success = utils.isString(value) && value.endsWith(String(targetValue));
       break;
     }
-    case "contains": {
+    case LookupEnum.CONTAINS: {
       success = utils.isString(value) && value.indexOf(String(targetValue)) > -1;
       break;
     }
-    case "regex": {
+    case LookupEnum.REGEX: {
       success = utils.isString(value) && value.match(new RegExp(targetValue));
       break;
     }
-    case "range": {
+    case LookupEnum.RANGE: {
       if (!utils.allowCompareRange(value)) {
         success = false;
       } else {
@@ -161,19 +162,19 @@ export const compareValueByLookup = (value, lookup, targetValue) => {
       }
       break;
     }
-    case "lt": {
+    case LookupEnum.LT: {
       success = utils.allowCompareRange(value) && utils.allowCompareRange(targetValue) && value < targetValue;
       break;
     }
-    case "lte": {
+    case LookupEnum.LTE: {
       success = utils.allowCompareRange(value) && utils.allowCompareRange(targetValue) && value <= targetValue;
       break;
     }
-    case "gt": {
+    case LookupEnum.GT: {
       success = utils.allowCompareRange(value) && utils.allowCompareRange(targetValue) && value > targetValue;
       break;
     }
-    case "gte": {
+    case LookupEnum.GTE: {
       success = utils.allowCompareRange(value) && utils.allowCompareRange(targetValue) && value >= targetValue;
       break;
     }
@@ -188,7 +189,7 @@ export const handleFilterRows = (query, rows, filterFields, searchFields) => {
     const lookups = filterFields[fieldName] || [];
     for (let lookup of lookups) {
       let value = query[`${fieldName}${FIELD_SEPARATOR}${lookup}`];
-      if (value === undefined && lookup === "exact") {
+      if (value === undefined && lookup === LookupEnum.EXACT) {
         value = query[fieldName];
       }
       if (!utils.isEmpty(value)) {
@@ -266,7 +267,7 @@ export const handleSortRows = (rows, ordering, orderingFields) => {
           try {
             const v1 = findRowValueByFieldName(a, fieldName);
             const v2 = findRowValueByFieldName(b, fieldName);
-            _ret = compareValueByLookup(v1, isAsc ? "lt" : "gt", v2);
+            _ret = compareValueByLookup(v1, isAsc ? LookupEnum.LT : LookupEnum.GT, v2);
           } catch (err) {
             // 此处排序比较，若是输出错误会有很多，暂不输出日志
             _ret = false;
@@ -308,7 +309,7 @@ export const initRestfulResponse = (req, filePath, route) => {
   const { pk_field: pkField, rows, rules, page_size: defaultSize } = config;
   if (!detail) {
     switch (req.method.toUpperCase()) {
-      case "GET": {
+      case MethodEnum.GET: {
         // 列表
         const results = queryRows(query, config);
         // 分页
@@ -318,7 +319,7 @@ export const initRestfulResponse = (req, filePath, route) => {
         response = { json: { count: results.length, results: pageRows } };
         break;
       }
-      case "POST": {
+      case MethodEnum.POST: {
         // 创建
         const row = req.body;
         try {
@@ -352,16 +353,16 @@ export const initRestfulResponse = (req, filePath, route) => {
       response = { code: 404, text: "Not Found" };
     } else {
       switch (req.method) {
-        case "GET": {
+        case MethodEnum.GET: {
           // 详情
           response = { json: row, code: 200 };
           break;
         }
-        case "PUT":
-        case "PATCH": {
+        case MethodEnum.PUT:
+        case MethodEnum.PATCH: {
           // 更新
           const data = req.body || {};
-          const partial = req.method === "PATCH";
+          const partial = req.method === MethodEnum.PATCH;
           try {
             validateSubmitData(data, rules, partial);
             for (let key in data) {
@@ -374,7 +375,7 @@ export const initRestfulResponse = (req, filePath, route) => {
           }
           break;
         }
-        case "DELETE": {
+        case MethodEnum.DELETE: {
           // 删除
           config.rows = rows.filter(item => item[pkField] == row[pkField]);
           response = { json: row, code: 204 };
