@@ -6,9 +6,9 @@ import { LookupEnum, ALLOW_METHODS } from "./enums.js";
 export const handleValidateResult = result => {
   if (result.error) {
     result.error.details.forEach(err => {
-      logger.error(`${err.type}: ${err.message}`);
+      logger.error(`validate error ==> ${err.message}`);
     });
-    throw Error(result.error.details);
+    throw Error("\n" + JSON.stringify(result.error.details, null, 2));
   }
 };
 
@@ -74,8 +74,8 @@ export const validateConfig = data => {
     rows: Joi.array().items(Joi.object()),
     actions: Joi.array().items(
       Joi.object({
-        method: Joi.string().valid(...ALLOW_METHODS),
-        url_path: Joi.string(),
+        method: Joi.string().valid(...ALLOW_METHODS).required(),
+        url_path: Joi.string().required(),
         detail: Joi.boolean(),
         response: Joi.object({
           code: Joi.number().min(1).integer(),
@@ -88,8 +88,8 @@ export const validateConfig = data => {
     ),
     apis: Joi.array().items(
       Joi.object({
-        method: Joi.string().valid(...ALLOW_METHODS),
-        path: Joi.string(),
+        method: Joi.string().valid(...ALLOW_METHODS).required(),
+        path: Joi.string().required(),
         response: Joi.object(),
       })
     ),

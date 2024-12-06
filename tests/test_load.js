@@ -2,6 +2,7 @@ import { test, expect, describe, afterEach } from "@jest/globals";
 
 import logger from "../src/logger.js";
 import * as loadFile from "../src/loadFile.js";
+import { validateConfig } from "../src/validator.js";
 
 const TEST_FILE_PATH = "fixtures/open/custom.json";
 const TEST_RESTFUL_FILE = "fixtures/users.json";
@@ -70,28 +71,28 @@ describe("test load file", () => {
 
 describe("test validate config", () => {
   test("test validate config fail", () => {
-    expect(() => loadFile.validateConfig([])).toThrow(/must be a dict/);
-    expect(() => loadFile.validateConfig({ page_size: "1" })).toThrow(/must be a int/);
-    expect(() => loadFile.validateConfig({ page_size: -1 })).toThrow(/greater than 0/);
-    expect(() => loadFile.validateConfig({ filter_fields: [] })).toThrow(/must be a dict/);
-    expect(() => loadFile.validateConfig({ filter_fields: { test: "test" } })).toThrow(/values can only be set arrays/);
-    expect(() => loadFile.validateConfig({ search_fields: {} })).toThrow(/must be a array/);
-    expect(() => loadFile.validateConfig({ ordering_fields: {} })).toThrow(/must be a array/);
-    expect(() => loadFile.validateConfig({ ordering: {} })).toThrow(/must be a array/);
-    expect(() => loadFile.validateConfig({ pk_field: 1 })).toThrow(/must be a string/);
-    expect(() => loadFile.validateConfig({ rules: [] })).toThrow(/must be a dict/);
-    expect(() => loadFile.validateConfig({ rules: { test: [] } })).toThrow(/values can only be set dict/);
-    expect(() => loadFile.validateConfig({ rules: { test: {} } })).toThrow(/value must have a "type"/);
-    expect(() => loadFile.validateConfig({ rows: {} })).toThrow(/must be a array/);
-    expect(() => loadFile.validateConfig({ rows: [1, 2] })).toThrow(/item value must be a dict/);
-    expect(() => loadFile.validateConfig({ actions: {} })).toThrow(/must be a array/);
-    expect(() => loadFile.validateConfig({ actions: [1] })).toThrow(/item value must be a dict/);
-    expect(() => loadFile.validateConfig({ actions: [{}] })).toThrow(/item value must have a "method"/);
-    expect(() => loadFile.validateConfig({ actions: [{ method: "GET" }] })).toThrow(/item value must have a "url_path"/);
-    expect(() => loadFile.validateConfig({ apis: {} })).toThrow(/must be a array/);
-    expect(() => loadFile.validateConfig({ apis: [1] })).toThrow(/item value must be a dict/);
-    expect(() => loadFile.validateConfig({ apis: [{}] })).toThrow(/item value must have a "method"/);
-    expect(() => loadFile.validateConfig({ apis: [{ method: "GET" }] })).toThrow(/item value must have a "path"/);
+    expect(() => validateConfig([])).toThrow(/must be of type object/);
+    expect(() => validateConfig({ page_size: "a" })).toThrow(/must be a number/);
+    expect(() => validateConfig({ page_size: -1 })).toThrow(/must be greater than or equal to 1/);
+    expect(() => validateConfig({ filter_fields: [] })).toThrow(/must be of type object/);
+    expect(() => validateConfig({ filter_fields: { test: "test" } })).toThrow(/must be an array/);
+    expect(() => validateConfig({ search_fields: {} })).toThrow(/must be an array/);
+    expect(() => validateConfig({ ordering_fields: {} })).toThrow(/must be an array/);
+    expect(() => validateConfig({ ordering: {} })).toThrow(/must be an array/);
+    expect(() => validateConfig({ pk_field: 1 })).toThrow(/must be a string/);
+    expect(() => validateConfig({ rules: [] })).toThrow(/must be of type object/);
+    expect(() => validateConfig({ rules: { test: [] } })).toThrow(/must be of type object/);
+    expect(() => validateConfig({ rules: { test: {} } })).toThrow(/rules.test.type.*is required/);
+    expect(() => validateConfig({ rows: {} })).toThrow(/must be an array/);
+    expect(() => validateConfig({ rows: [1, 2] })).toThrow(/must be of type object/);
+    expect(() => validateConfig({ actions: {} })).toThrow(/must be an array/);
+    expect(() => validateConfig({ actions: [1] })).toThrow(/must be of type object/);
+    expect(() => validateConfig({ actions: [{}] })).toThrow(/actions\[\d+\].method.*is required/);
+    expect(() => validateConfig({ actions: [{ method: "GET" }] })).toThrow(/actions\[\d+\].url_path.*is required/);
+    expect(() => validateConfig({ apis: {} })).toThrow(/must be an array/);
+    expect(() => validateConfig({ apis: [1] })).toThrow(/must be of type object/);
+    expect(() => validateConfig({ apis: [{}] })).toThrow(/apis\[\d+\].method.*is required/);
+    expect(() => validateConfig({ apis: [{ method: "GET" }] })).toThrow(/apis\[\d+\].path.*is required/);
   });
 
   test("test load file validate fail", () => {
