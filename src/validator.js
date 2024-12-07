@@ -83,14 +83,20 @@ export const validateConfig = data => {
           json: Joi.alternatives().try(Joi.object(), Joi.array()),
           file: Joi.string(),
           text: Joi.string(),
-        }),
+        }).unknown(),
       })
     ),
     apis: Joi.array().items(
       Joi.object({
         method: Joi.string().valid(...ALLOW_METHODS).required(),
         path: Joi.string().required(),
-        response: Joi.object(),
+        response: Joi.object({
+          code: Joi.number().min(1).integer(),
+          headers: Joi.object().pattern(Joi.string(), Joi.string()),
+          json: Joi.alternatives().try(Joi.object(), Joi.array()),
+          file: Joi.string(),
+          text: Joi.string(),
+        }).unknown(),
       })
     ),
   }).unknown();

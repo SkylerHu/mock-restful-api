@@ -16,6 +16,7 @@
   "collectCoverageFrom": [
     "src/**/*.{js,jsx,ts}",
     "!**/node_modules/**",
-    "!src/service.js"
+    "!src/service.js",
+    "!src/logger.js"
   ]
 }

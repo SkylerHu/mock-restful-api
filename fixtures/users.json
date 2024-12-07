@@ -2,7 +2,7 @@
   "restful": "web/users/",
   "page_size": 10,
   "filter_fields": {
-    "id": ["exact", "in"],
+  "id": ["exact", "in"],
     "username": ["exact", "in", "contains", "startswith", "endswith", "regex"],
     "is_active": ["exact"],
     "age": ["exact", "range", "lt", "lte", "gt", "gte"],
