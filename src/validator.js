@@ -16,39 +16,55 @@ const buildJoiSchema = rules => {
   let schema = {};
   for (let key in rules) {
     let item = rules[key];
-    let rule = Joi[item.type]();
-    for (let attr in item) {
-      if (attr === "type") {
-        continue;
-      }
-      if (rule[attr]) {
-        // 函数存在则调用
-        const value = item[attr];
-        if (utils.isAbsBoolean(value)) {
-          if (value === true) {
-            // 例如 required: true 的场景
-            rule = rule[attr]();
+    try {
+      let rule = Joi[item.type]();
+      for (let attr in item) {
+        if (attr === "type") {
+          continue;
+        }
+        if (rule[attr]) {
+          // 函数存在则调用
+          const value = item[attr];
+          if (utils.isAbsBoolean(value)) {
+            if (value === true) {
+              // 例如 required: true 的场景
+              rule = rule[attr]();
+            }
+          } else {
+            if (utils.isArray(value)) {
+              rule = rule[attr](...value);
+            } else {
+              if (item.type === "string" && attr === "pattern") {
+                rule = rule.pattern(new RegExp(value));
+              } else {
+                rule = rule[attr](value);
+              }
+            }
           }
-        } else {
-          rule = rule[attr](value);
         }
       }
-    }
 
-    schema[key] = rule;
+      schema[key] = rule;
+    } catch (err) {
+      logger.error(`The rule is illegal, not support: ${JSON.stringify(item)}`);
+      logger.error(err);
+    }
   }
-  return Joi.object(schema);
+  return Joi.object(schema).unknown();
 };
 
 export const validateSubmitData = (data, rules, partial = false) => {
-  if (!utils.isDict(rules) || Object.keys(rules).length === 0) {
-    return true;
+  if (!utils.isDict(data)) {
+    throw Error("The resutful created data submitted by post can only be a dictionary.");
   }
-  let myRules;
+  if (!utils.isDict(rules) || Object.keys(data).length === 0) {
+    return data;
+  }
+  let myRules = {};
   if (partial) {
     for (let fieldName in rules) {
       // 部分更新的情况下只校验表单传递了的字段
-      if (data && data[fieldName] !== undefined) {
+      if (data[fieldName] !== undefined) {
         myRules[fieldName] = rules[fieldName];
       }
     }
@@ -58,7 +74,7 @@ export const validateSubmitData = (data, rules, partial = false) => {
   const joiSchema = buildJoiSchema(myRules);
   const result = joiSchema.validate(data);
   handleValidateResult(result);
-  return result;
+  return result.value;
 };
 
 export const validateConfig = data => {
@@ -102,5 +118,5 @@ export const validateConfig = data => {
   }).unknown();
   const result = schema.validate(data);
   handleValidateResult(result);
-  return result;
+  return result.value;
 };

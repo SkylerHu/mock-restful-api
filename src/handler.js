@@ -327,15 +327,16 @@ export const initRestfulResponse = (req, filePath, route) => {
   const { query } = req;
   const { config } = global.jsonConfig[filePath] || {};
   const { detail } = route;
-  const { pk_field: pkField, rows, rules, page_size: defaultSize } = config;
+  const { pk_field: pkField, rules, page_size: defaultSize } = config;
+  let { rows } = config;
   if (!detail) {
     switch (req.method.toUpperCase()) {
       case MethodEnum.GET: {
         // 列表
         const results = queryRows(query, config);
         // 分页
-        const page = Number(query.page || 1);
-        const pageSize = Number(query.page_size || defaultSize || 20);
+        const page = Number(query?.page || 1);
+        const pageSize = Number(query?.page_size || defaultSize || 20);
         const pageRows = results.slice((page - 1) * pageSize, page * pageSize);
         response = { json: { count: results.length, results: pageRows } };
         break;
@@ -355,7 +356,7 @@ export const initRestfulResponse = (req, filePath, route) => {
             }
             row[pkField] = Number(last) + 1;
           }
-          rows.append(row);
+          rows.push(row);
           response = { json: row, code: 201 };
         } catch (err) {
           logger.error(err);
@@ -369,9 +370,14 @@ export const initRestfulResponse = (req, filePath, route) => {
       }
     }
   } else {
-    const row = findRowByPk(req.params[0], req.query, config);
+    if (!utils.isDict(req.params) || utils.isBlank(req.params.pk)) {
+      response = { code: 404, text: "Not Found params.pk" };
+      return response;
+    }
+    const pkValue = req.params.pk;
+    const row = findRowByPk(pkValue, query, config);
     if (!row) {
-      response = { code: 404, text: "Not Found" };
+      response = { code: 404, text: "Not Found by query" };
     } else {
       switch (req.method) {
         case MethodEnum.GET: {
@@ -398,7 +404,16 @@ export const initRestfulResponse = (req, filePath, route) => {
         }
         case MethodEnum.DELETE: {
           // 删除
-          config.rows = rows.filter(item => item[pkField] == row[pkField]);
+          // let idx;
+          // for (idx = 0; idx < rows.length; idx++) {
+          //   if (rows[idx][pkField] == pkValue) {
+          //     break;
+          //   }
+          // }
+          // rows.splice(0, 1);
+          rows = rows.filter(item => item[pkField] != pkValue);
+          config.rows = rows;
+          logger.debug(`idx= ${pkValue} ${JSON.stringify(rows.map(item => item.name))}`);
           response = { json: row, code: 204 };
           break;
         }

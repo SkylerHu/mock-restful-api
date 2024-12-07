@@ -17,12 +17,12 @@
   "ordering": ["-id"],
   "pk_field": "id",
   "rules": {
-    "username": { "type": "string", "pattern": "/\\w+/", "required": true },
+    "username": { "type": "string", "pattern": "\\w+", "required": true },
     "nickname": { "type": "string", "max": 32, "required": false },
     "is_active": { "type": "boolean" },
-    "age": { "type": "integer", "min": 0, "max": 100 },
+    "age": { "type": "number", "integer": true, "min": 0, "max": 100 },
     "gender": { "type": "string", "valid": ["male", "female"] },
-    "score": { "type": "float", "min": 0, "max": 100 },
+    "score": { "type": "number", "min": 0, "max": 100 },
     "created_at": { "type": "date" }
   },
   "rows": [

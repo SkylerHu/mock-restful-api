@@ -1,13 +1,12 @@
-import { test, expect, describe } from "@jest/globals";
+import { test, expect, describe, beforeEach, afterEach } from "@jest/globals";
 
 import * as handler from "../src/handler.js";
-import { LookupEnum } from "../src/enums.js";
-import configData from "../fixtures/users.json";
+import { loadFileToConfig } from "../src/loadFile.js";
+import { LookupEnum, MethodEnum } from "../src/enums.js";
+import { validateSubmitData } from "../src/validator.js";
+import logger from "../src/logger.js";
 
-const { rows } = configData;
-
-const firstRow = rows[0];
-
+// 不能更改，会影响测试用例
 const TEST_ROWS = [
   { id: 1, name: "ab" },
   { id: 2, name: "c", city: { name: "beijing" } },
@@ -15,6 +14,7 @@ const TEST_ROWS = [
   { id: 4, name: "e" },
   { id: 5, name: "e" },
 ];
+const firstRow = TEST_ROWS[1];
 
 describe("test handle restfule api", () => {
   test("test find value by field name", () => {
@@ -216,5 +216,125 @@ describe("test handle restfule api", () => {
     row = handler.findRowByPk("a", null, config);
     expect(row["id"]).toBe(3);
   });
+});
 
+const filePath = "fixtures/users.json";
+
+describe("test restfule api", () => {
+  beforeEach(() => {
+    // 加载配置
+    loadFileToConfig(filePath);
+  });
+  afterEach(() => {
+    global.jsonConfig = {};
+  });
+
+  test("test validate restful post data", () => {
+    // 测试users.json中的rules
+    const {
+      config: { rules },
+    } = global.jsonConfig[filePath];
+    // 输入参数为空
+    expect(validateSubmitData({ test: 1 }, [])).toEqual({ test: 1 });
+    expect(validateSubmitData({ test: 1 }, {}, true)).toEqual({ test: 1 });
+    expect(validateSubmitData({}, rules, true)).toEqual({});
+    expect(() => validateSubmitData([], rules, true)).toThrow(/only be a dictionary/);
+    let data = {
+      nickname: "test",
+      is_active: true,
+      age: 18,
+      gender: "male",
+      score: 100,
+      created_at: "2024-12-07T15:57:08.000Z",
+      test: "other",
+    };
+    expect(() => validateSubmitData(data, rules)).toThrow(/username.*is required/);
+    expect(validateSubmitData(data, rules, true)).toBeDefined();
+    expect(logger.error).toHaveBeenCalled();
+    // 正常数据
+    data["username"] = "test";
+    let result = validateSubmitData(data, rules);
+    delete result.created_at;
+    const expectRet = JSON.parse(JSON.stringify(data));
+    delete expectRet.created_at;
+    expect(result).toEqual(expectRet);
+    // test error
+    expect(validateSubmitData(data, { create_at: { type: "date", format: "YYYY-MM-DD HH:mm:ss" } })).toBeDefined();
+    expect(logger.error).toHaveBeenCalled();
+    // test_format joi没有这个方法
+    expect(validateSubmitData(data, { nickname: { type: "string", test_format: "test" } })).toBeDefined();
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  test("test restful api response", () => {
+    // mock 下数据
+    global.jsonConfig[filePath].config.rows = JSON.parse(JSON.stringify(TEST_ROWS));
+    global.jsonConfig[filePath].config.rules = { age: { type: "number", required: true } };
+    const {
+      config: { rows, pk_field },
+    } = global.jsonConfig[filePath];
+    const oldLength = rows.length;
+    expect(rows).toEqual(TEST_ROWS);
+    let response;
+    // get list
+    response = handler.initRestfulResponse({ method: MethodEnum.GET }, filePath, {});
+    expect(response.json.count).toBe(rows.length);
+    // list 分页
+    response = handler.initRestfulResponse({ method: MethodEnum.GET, query: { page_size: 1 } }, filePath, {});
+    expect(response.json.count).toBe(rows.length);
+    expect(response.json.results).toHaveLength(1);
+    // post data
+    let body = {
+      name: "test",
+    };
+    response = handler.initRestfulResponse({ method: MethodEnum.POST, body }, filePath, {});
+    expect(response.code).toBe(400);
+    body["age"] = 18;
+    response = handler.initRestfulResponse({ method: MethodEnum.POST, body }, filePath, {});
+    expect(response.code).toBe(201);
+    expect(response.json[pk_field]).toBe(6);
+    expect(rows).toHaveLength(oldLength + 1);
+    // put list
+    response = handler.initRestfulResponse({ method: MethodEnum.PUT, body: { name: newName } }, filePath, {});
+    expect(response.code).toBe(405);
+    // 传递pk_filed
+    const pk = 0;
+    body = {
+      [pk_field]: pk,
+      name: "test2",
+      age: 1,
+    };
+    response = handler.initRestfulResponse({ method: MethodEnum.POST, body }, filePath, {});
+    expect(response.code).toBe(201);
+    expect(response.json[pk_field]).toBe(pk);
+    expect(rows).toHaveLength(oldLength + 2);
+    // get detail
+    response = handler.initRestfulResponse({ method: MethodEnum.GET }, filePath, { detail: true });
+    expect(response.code).toBe(404);
+    response = handler.initRestfulResponse({ method: MethodEnum.GET, params: [] }, filePath, { detail: true });
+    expect(response.code).toBe(404);
+    response = handler.initRestfulResponse({ method: MethodEnum.GET, params: { pk } }, filePath, { detail: true });
+    expect(response.code).toBe(200);
+    expect(response.json[pk_field]).toBe(pk);
+    // put 数据不全
+    const newName = "test_new";
+    expect(response.json.name !== newName).toBeTruthy();
+    response = handler.initRestfulResponse({ method: MethodEnum.PUT, params: { pk }, body: { name: newName } }, filePath, { detail: true });
+    expect(response.code).toBe(400);
+    // patch 修改成功
+    response = handler.initRestfulResponse({ method: MethodEnum.PATCH, params: { pk }, body: { name: newName } }, filePath, { detail: true });
+    expect(response.code).toBe(200);
+    response = handler.initRestfulResponse({ method: MethodEnum.GET, params: { pk } }, filePath, { detail: true });
+    expect(response.code).toBe(200);
+    expect(response.json.name).toBe(newName);
+    // post to detail, not allow
+    response = handler.initRestfulResponse({ method: MethodEnum.POST, params: { pk }, body }, filePath, { detail: true });
+    expect(response.code).toBe(405);
+    // delete
+    response = handler.initRestfulResponse({ method: MethodEnum.DELETE, params: { pk } }, filePath, { detail: true });
+    expect(response.code).toBe(204);
+    response = handler.initRestfulResponse({ method: MethodEnum.GET, params: { pk } }, filePath, { detail: true });
+    expect(response.code).toBe(404);
+    expect(global.jsonConfig[filePath].config.rows).toHaveLength(oldLength + 1);
+  });
 });

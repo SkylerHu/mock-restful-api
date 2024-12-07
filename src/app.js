@@ -19,8 +19,8 @@ const initApp = option => {
   app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
   app.use(morgan("dev")); // 配置输入日志格式
 
-  // app.get("/web/users/", (req, res) => {
-  //   res.status(200).json(req.query);
+  // app.get("/web/users/:pk([\\w-]+)/", (req, res) => {
+  //   res.status(200).json({ data: req.params.pk });
   // });
 
   // 若是有多个相同的 method+path，后面的无效

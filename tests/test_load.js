@@ -14,7 +14,7 @@ describe("test load file", () => {
   test("test get json file list", () => {
     expect(loadFile.getJsonFileList(TEST_FILE_PATH)).toEqual([TEST_FILE_PATH]);
     expect(loadFile.getJsonFileList("fixtures/open/")).toEqual([TEST_FILE_PATH]);
-    expect(loadFile.getJsonFileList("fixtures")).toEqual(["fixtures/groups.json", TEST_FILE_PATH, TEST_RESTFUL_FILE]);
+    expect(loadFile.getJsonFileList("fixtures")).toEqual(["fixtures/groups.json", "fixtures/illegal.json", TEST_FILE_PATH, TEST_RESTFUL_FILE]);
   });
 
   test("test load file content", () => {

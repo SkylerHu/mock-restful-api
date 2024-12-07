@@ -84,7 +84,7 @@ export const genConfigToRoutes = filePath => {
     // 判断是否要添加斜线后缀
     const appendSlash = restful.endsWith("/") ? "/" : "";
     // pk_field 不仅仅是递增的数字，可能使用其他的例如uuid
-    const detailUrl = pathJoin(restful, "([\\w-]+)", appendSlash);
+    const detailUrl = pathJoin(restful, ":pk([\\w-]+)", appendSlash);
     // 添加restful接口操作
     const baseRoute = { restful };
     routes = [
