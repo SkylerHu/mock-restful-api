@@ -6,9 +6,7 @@ import logger from "./logger.js";
 import { initRestfulResponse } from "./handler.js";
 
 const initApp = option => {
-  const { pathPrefix = "/" } = option || {};
-
-  // logger.info(`init app config: ${JSON.stringify(option)}`);
+  const { prefix = "/" } = option || {};
 
   const app = express();
 
@@ -29,10 +27,9 @@ const initApp = option => {
       // 判断method是否支持
       const _method = method.toLowerCase();
       // 添加路由到app上
-      const _path = pathJoin(pathPrefix, reqPath);
+      const _path = pathJoin(prefix, reqPath);
       logger.info(`app add route  ${_method.padEnd(8, " ")} ${_path}`);
       app[_method](_path, (req, res) => {
-        logger.info(`${req.method} ${req.path}\nquery: ${JSON.stringify(req.query, null, " ")}\nbody: ${JSON.stringify(req.body)}`);
         let respConf = response || {};
         if (restful) {
           // 处理restful接口

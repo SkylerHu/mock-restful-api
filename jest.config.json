@@ -17,6 +17,7 @@
     "src/**/*.{js,jsx,ts}",
     "!**/node_modules/**",
     "!src/service.js",
+    "!src/index.js",
     "!src/logger.js"
   ]
 }

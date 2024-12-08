@@ -2,6 +2,7 @@
   "search.exclude": {
     "**/node_modules": true,
     "dist/**": true,
-    "releases/**": true
+    "releases/**": true,
+    "package-lock.json": true
   }
 }
