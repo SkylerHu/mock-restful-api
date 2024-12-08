@@ -38,6 +38,7 @@ describe("test handle restfule api", () => {
   test("teset trans value type", () => {
     // test number
     expect(handler.transTargetValueType(1, ["1", "2"])).toEqual([1, 2]);
+    expect(handler.transTargetValueType(1, ["", "2"])).toEqual(["", 2]);
     expect(handler.transTargetValueType(1, "2")).toBe(2);
     expect(handler.transTargetValueType(1, "a")).toBeUndefined();
     expect(handler.transTargetValueType(1, "")).toBe("");
@@ -172,6 +173,8 @@ describe("test handle restfule api", () => {
     expect(results.map(item => item.id)).toEqual([1, 2, 3, 4, 5]);
     results = handler.handleSortRows(TEST_ROWS, "name", []);
     expect(results.map(item => item.id)).toEqual([1, 2, 3, 4, 5]);
+    results = handler.handleSortRows(TEST_ROWS, "name", ["id"]);
+    expect(results.map(item => item.id)).toEqual([1, 2, 3, 4, 5]);
     results = handler.handleSortRows(TEST_ROWS, "", ["name"]);
     expect(results.map(item => item.id)).toEqual([1, 2, 3, 4, 5]);
     // -id未生效
@@ -215,6 +218,11 @@ describe("test handle restfule api", () => {
     expect(row).toBeUndefined();
     row = handler.findRowByPk("a", null, config);
     expect(row["id"]).toBe(3);
+  });
+
+  test("gen new pk", () => {
+    expect(handler.genRowCreateNewPk("id", TEST_ROWS)).toBe(6);
+    expect(handler.genRowCreateNewPk("name", TEST_ROWS)).toBe(1);
   });
 });
 
@@ -267,29 +275,33 @@ describe("test restfule api", () => {
   });
 
   test("test restful api response", () => {
-    // mock 下数据
-    global.jsonConfig[filePath].config.rows = JSON.parse(JSON.stringify(TEST_ROWS));
-    global.jsonConfig[filePath].config.rules = { age: { type: "number", required: true } };
     const {
       config: { rows, pk_field },
     } = global.jsonConfig[filePath];
     const oldLength = rows.length;
-    expect(rows).toEqual(TEST_ROWS);
     let response;
+    response = handler.initRestfulResponse({ method: MethodEnum.GET }, "_test", {});
+    expect(response.code).toBe(404);
     // get list
     response = handler.initRestfulResponse({ method: MethodEnum.GET }, filePath, {});
-    expect(response.json.count).toBe(rows.length);
+    expect(response.json.count).toBe(oldLength);
     // list 分页
     response = handler.initRestfulResponse({ method: MethodEnum.GET, query: { page_size: 1 } }, filePath, {});
-    expect(response.json.count).toBe(rows.length);
+    expect(response.json.count).toBe(oldLength);
     expect(response.json.results).toHaveLength(1);
     // post data
     let body = {
-      name: "test",
+      nickname: "test",
+      is_active: true,
+      age: 18,
+      gender: "male",
+      score: 100,
+      created_at: "2024-12-07T15:57:08.000Z",
+      test: "other",
     };
     response = handler.initRestfulResponse({ method: MethodEnum.POST, body }, filePath, {});
     expect(response.code).toBe(400);
-    body["age"] = 18;
+    body["username"] = "test";
     response = handler.initRestfulResponse({ method: MethodEnum.POST, body }, filePath, {});
     expect(response.code).toBe(201);
     expect(response.json[pk_field]).toBe(6);
@@ -300,9 +312,9 @@ describe("test restfule api", () => {
     // 传递pk_filed
     const pk = 0;
     body = {
+      ...body,
       [pk_field]: pk,
-      name: "test2",
-      age: 1,
+      username: "test2",
     };
     response = handler.initRestfulResponse({ method: MethodEnum.POST, body }, filePath, {});
     expect(response.code).toBe(201);
@@ -321,6 +333,8 @@ describe("test restfule api", () => {
     expect(response.json.name !== newName).toBeTruthy();
     response = handler.initRestfulResponse({ method: MethodEnum.PUT, params: { pk }, body: { name: newName } }, filePath, { detail: true });
     expect(response.code).toBe(400);
+    response = handler.initRestfulResponse({ method: MethodEnum.PUT, params: { pk } }, filePath, { detail: true });
+    expect(response.code).toBe(400);
     // patch 修改成功
     response = handler.initRestfulResponse({ method: MethodEnum.PATCH, params: { pk }, body: { name: newName } }, filePath, { detail: true });
     expect(response.code).toBe(200);
@@ -328,13 +342,16 @@ describe("test restfule api", () => {
     expect(response.code).toBe(200);
     expect(response.json.name).toBe(newName);
     // post to detail, not allow
-    response = handler.initRestfulResponse({ method: MethodEnum.POST, params: { pk }, body }, filePath, { detail: true });
+    response = handler.initRestfulResponse({ method: MethodEnum.POST, params: { pk }, body: {} }, filePath, { detail: true });
     expect(response.code).toBe(405);
     // delete
     response = handler.initRestfulResponse({ method: MethodEnum.DELETE, params: { pk } }, filePath, { detail: true });
     expect(response.code).toBe(204);
+    expect(response.json[pk_field]).toBe(pk);
+    // get after delete
     response = handler.initRestfulResponse({ method: MethodEnum.GET, params: { pk } }, filePath, { detail: true });
+    expect(rows).toHaveLength(oldLength + 1);
+    expect(response.json).toBeUndefined();
     expect(response.code).toBe(404);
-    expect(global.jsonConfig[filePath].config.rows).toHaveLength(oldLength + 1);
   });
 });

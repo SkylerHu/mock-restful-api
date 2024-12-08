@@ -57,7 +57,7 @@ export const validateSubmitData = (data, rules, partial = false) => {
   if (!utils.isDict(data)) {
     throw Error("The resutful created data submitted by post can only be a dictionary.");
   }
-  if (!utils.isDict(rules) || Object.keys(data).length === 0) {
+  if (!utils.isDict(rules)) {
     return data;
   }
   let myRules = {};

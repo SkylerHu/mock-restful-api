@@ -200,7 +200,7 @@ export const handleFilterRows = (filterFields, searchFields, rows, query) => {
   // 初始化 filters
   const filters = [];
   for (let fieldName in filterFields) {
-    const lookups = filterFields[fieldName] || [];
+    const lookups = filterFields[fieldName];
     for (let lookup of lookups) {
       let value = query[`${fieldName}${FIELD_SEPARATOR}${lookup}`];
       if (value === undefined && lookup === LookupEnum.EXACT) {
@@ -321,11 +321,25 @@ export const findRowByPk = (pkValue, query, config) => {
   return row;
 };
 
-export const initRestfulResponse = (req, filePath, route) => {
-  let response = {};
+export const genRowCreateNewPk = (pkField, rows) => {
+  const pks = rows.map(item => item[pkField]).filter(v => v && utils.isNumber(v));
+  let last = 0;
+  if (pks.length > 0) {
+    pks.sort(); // 排序
+    last = pks[pks.length - 1];
+  }
+  const pk = Number(last) + 1;
+  return pk;
+};
 
+export const initRestfulResponse = (req, filePath, route) => {
+  const configData = global.jsonConfig[filePath];
+  if (!utils.isDict(configData)) {
+    return { code: 404, text: `path=${route.path} Not Found` };
+  }
+  let response = {};
   const { query } = req;
-  const { config } = global.jsonConfig[filePath] || {};
+  const { config } = configData;
   const { detail } = route;
   const { pk_field: pkField, rules, page_size: defaultSize } = config;
   let { rows } = config;
@@ -336,7 +350,7 @@ export const initRestfulResponse = (req, filePath, route) => {
         const results = queryRows(query, config);
         // 分页
         const page = Number(query?.page || 1);
-        const pageSize = Number(query?.page_size || defaultSize || 20);
+        const pageSize = Number(query?.page_size || defaultSize);
         const pageRows = results.slice((page - 1) * pageSize, page * pageSize);
         response = { json: { count: results.length, results: pageRows } };
         break;
@@ -348,13 +362,7 @@ export const initRestfulResponse = (req, filePath, route) => {
           validateSubmitData(row, rules);
           if (utils.isNull(row[pkField])) {
             // 没有pk，自动生成一个
-            const pks = rows.map(item => item[pkField]).filter(v => v && utils.isNumber(v));
-            let last = 1;
-            if (pks.length > 0) {
-              pks.sort(); // 排序
-              last = pks[pks.length - 1];
-            }
-            row[pkField] = Number(last) + 1;
+            row[pkField] = genRowCreateNewPk(pkField, rows);
           }
           rows.push(row);
           response = { json: row, code: 201 };
@@ -404,16 +412,13 @@ export const initRestfulResponse = (req, filePath, route) => {
         }
         case MethodEnum.DELETE: {
           // 删除
-          // let idx;
-          // for (idx = 0; idx < rows.length; idx++) {
-          //   if (rows[idx][pkField] == pkValue) {
-          //     break;
-          //   }
-          // }
-          // rows.splice(0, 1);
-          rows = rows.filter(item => item[pkField] != pkValue);
-          config.rows = rows;
-          logger.debug(`idx= ${pkValue} ${JSON.stringify(rows.map(item => item.name))}`);
+          let idx;
+          for (idx = 0; idx < rows.length; idx++) {
+            if (rows[idx][pkField] == row[pkField]) {
+              break;
+            }
+          }
+          rows.splice(idx, 1);
           response = { json: row, code: 204 };
           break;
         }
