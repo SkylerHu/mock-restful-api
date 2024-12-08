@@ -28,9 +28,10 @@
     },
     {
       "method": "HEAD",
-      "path": "web/enums/",
+      "path": "web/enums/head/",
       "response": {
-        "code": 404
+        "code": 400,
+        "text": "fail"
       }
     },
     {
@@ -38,7 +39,15 @@
       "path": "web/download/",
       "response": {
         "code": 200,
-        "file": "./test.txt"
+        "file": "./fixtures/open/test.txt"
+      }
+    },
+    {
+      "method": "get",
+      "path": "web/download/abs/",
+      "response": {
+        "code": 200,
+        "file": "/tmp/test.txt"
       }
     }
   ],

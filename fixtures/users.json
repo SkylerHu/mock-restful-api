@@ -90,7 +90,7 @@
       "response": {
         "code": 201,
         "json": { "message": "success" },
-        "headers": {}
+        "headers": {"x-test": "test"}
       }
     },
     {
@@ -109,7 +109,7 @@
       "path": "web/enums/",
       "response": {
         "code": 200,
-        "data": [1, 2]
+        "text": "text"
       }
     }
   ]

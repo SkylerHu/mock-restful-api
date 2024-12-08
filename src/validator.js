@@ -5,10 +5,13 @@ import { LookupEnum, ALLOW_METHODS } from "./enums.js";
 
 export const handleValidateResult = result => {
   if (result.error) {
+    const errMsgs = [];
     result.error.details.forEach(err => {
-      logger.error(`validate error ==> ${err.message}`);
+      // logger.error(`validate error ==> ${err.message}`);
+      errMsgs.push(err.message);
     });
-    throw Error("\n" + JSON.stringify(result.error.details, null, 2));
+    logger.error("validate error details:\n" + JSON.stringify(result.error.details, null, 2));
+    throw Error(errMsgs);
   }
 };
 

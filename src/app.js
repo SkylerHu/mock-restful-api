@@ -1,17 +1,14 @@
-import path from "path";
-import { dirname } from "node:path";
 import { join as pathJoin } from "node:path/posix";
 import express from "express";
 import morgan from "morgan";
 
-import { isNull } from "./utils.js";
 import logger from "./logger.js";
 import { initRestfulResponse } from "./handler.js";
 
 const initApp = option => {
   const { pathPrefix = "/" } = option || {};
 
-  logger.info(`init app config: ${JSON.stringify(option)}`);
+  // logger.info(`init app config: ${JSON.stringify(option)}`);
 
   const app = express();
 
@@ -26,16 +23,11 @@ const initApp = option => {
   // 若是有多个相同的 method+path，后面的无效
   // 遍历所有配置初始化app的路由
   for (let filePath in global.jsonConfig) {
-    const { routes } = global.jsonConfig[filePath] || {};
-    for (let route of routes || []) {
+    const { routes } = global.jsonConfig[filePath];
+    for (let route of routes) {
       const { method, path: reqPath, restful, response } = route;
       // 判断method是否支持
       const _method = method.toLowerCase();
-      const func = app[_method];
-      if (isNull(func)) {
-        logger.error(`The method value is invalid: method=${method} in file ${filePath}`);
-        continue;
-      }
       // 添加路由到app上
       const _path = pathJoin(pathPrefix, reqPath);
       logger.info(`app add route  ${_method.padEnd(8, " ")} ${_path}`);
@@ -53,15 +45,16 @@ const initApp = option => {
         }
         // 处理不同返回格式
         if (json) {
-          res.status(code).json(json);
+          // 注意 code=204时，json无法返回给client；是遵循的HTTP标准
+          res.status(code).send(json);
         } else if (file) {
-          if (file.startswith("/")) {
-            // 绝对路径
-            res.status(code).sendFile(file);
-          } else {
-            // 相对配置文件的路径
-            res.status(code).sendFile(path.join(dirname(filePath), file));
+          let _path = file;
+          if (!_path.startsWith("/")) {
+            // 相对路径，相对于服务的root path
+            _path = pathJoin(process.cwd(), _path);
           }
+          logger.debug(`download filePath is ${_path}`);
+          res.status(code).sendFile(_path);
         } else {
           res.status(code).send(text);
         }

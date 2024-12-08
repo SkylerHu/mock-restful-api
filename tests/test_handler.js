@@ -348,6 +348,8 @@ describe("test restfule api", () => {
     response = handler.initRestfulResponse({ method: MethodEnum.DELETE, params: { pk } }, filePath, { detail: true });
     expect(response.code).toBe(204);
     expect(response.json[pk_field]).toBe(pk);
+    response = handler.initRestfulResponse({ method: MethodEnum.DELETE, params: { pk } }, filePath, { detail: true });
+    expect(response.code).toBe(404);
     // get after delete
     response = handler.initRestfulResponse({ method: MethodEnum.GET, params: { pk } }, filePath, { detail: true });
     expect(rows).toHaveLength(oldLength + 1);

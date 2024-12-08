@@ -1,7 +1,7 @@
 import fs from "fs";
-import path from "path";
 import { join as pathJoin } from "node:path/posix";
 import logger from "./logger.js";
+import { MethodEnum } from "./enums.js";
 import { validateConfig } from "./validator.js";
 
 global.jsonConfig = {
@@ -30,7 +30,7 @@ export const getJsonFileList = filePath => {
     const files = fs.readdirSync(filePath);
     files.forEach(fileName => {
       // fileName 是文件名称（不包含文件路径）
-      const childPath = path.join(filePath, fileName);
+      const childPath = pathJoin(filePath, fileName);
       allFilePaths = allFilePaths.concat(getJsonFileList(childPath));
     });
   }
@@ -88,12 +88,12 @@ export const genConfigToRoutes = filePath => {
     // 添加restful接口操作
     const baseRoute = { restful };
     routes = [
-      { ...baseRoute, method: "GET", path: restful }, // 列表
-      { ...baseRoute, method: "POST", path: restful }, // 创建
-      { ...baseRoute, method: "GET", path: detailUrl, detail: true }, // 详情
-      { ...baseRoute, method: "PATCH", path: detailUrl, detail: true }, // 部分字段修改
-      { ...baseRoute, method: "PUT", path: detailUrl, detail: true }, // 修改
-      { ...baseRoute, method: "DELETE", path: detailUrl, detail: true }, // 删除
+      { ...baseRoute, method: MethodEnum.GET, path: restful }, // 列表
+      { ...baseRoute, method: MethodEnum.POST, path: restful }, // 创建
+      { ...baseRoute, method: MethodEnum.GET, path: detailUrl, detail: true }, // 详情
+      { ...baseRoute, method: MethodEnum.PATCH, path: detailUrl, detail: true }, // 部分字段修改
+      { ...baseRoute, method: MethodEnum.PUT, path: detailUrl, detail: true }, // 修改
+      { ...baseRoute, method: MethodEnum.DELETE, path: detailUrl, detail: true }, // 删除
     ];
     // 额外操作
     (actions || []).forEach(action => {

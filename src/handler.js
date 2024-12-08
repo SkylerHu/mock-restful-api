@@ -367,7 +367,7 @@ export const initRestfulResponse = (req, filePath, route) => {
           rows.push(row);
           response = { json: row, code: 201 };
         } catch (err) {
-          logger.error(err);
+          logger.error(`${req.method} ${req.path} error: ${err}`);
           response = { json: { detail: err.message }, code: 400 };
         }
         break;

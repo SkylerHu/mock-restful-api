@@ -21,7 +21,7 @@ describe("test load file", () => {
     const content = loadFile.loadFileContent(TEST_FILE_PATH);
     expect(content["file_path"]).toEqual(TEST_FILE_PATH);
     expect(content).toHaveProperty("apis");
-    expect(content["apis"]).toHaveLength(5);
+    expect(content["apis"]).toHaveLength(6);
   });
   test("test load dir or not json file", () => {
     expect(loadFile.loadFileContent("fixtures")).toBeUndefined();
@@ -65,7 +65,7 @@ describe("test load file", () => {
       const { routes } = global.jsonConfig[filePath] || {};
       allRoutes = allRoutes.concat(routes);
     }
-    expect(allRoutes).toHaveLength(19);
+    expect(allRoutes).toHaveLength(20);
   });
 });
 
