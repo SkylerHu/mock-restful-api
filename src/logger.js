@@ -1,7 +1,7 @@
-import winston from "winston";
+const winston = require("winston");
 
 const logger = winston.createLogger({
-  level: "debug",
+  level: process.env.level || "debug",
   format: winston.format.combine(
     winston.format.errors({ stack: true }), // 自动捕获堆栈信息
     winston.format.colorize(),
@@ -18,4 +18,4 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
-export default logger;
+module.exports = logger;

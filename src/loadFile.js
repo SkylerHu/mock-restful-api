@@ -1,8 +1,8 @@
-import fs from "fs";
-import { join as pathJoin } from "node:path/posix";
-import logger from "./logger.js";
-import { MethodEnum } from "./enums.js";
-import { validateConfig } from "./validator.js";
+const fs = require("fs");
+const { join: pathJoin } = require("node:path/posix");
+const logger = require("./logger.js");
+const { MethodEnum } = require("./enums.js");
+const { validateConfig } = require("./validator.js");
 
 global.jsonConfig = {
   // 格式示例
@@ -16,7 +16,7 @@ global.jsonConfig = {
  * 递归获取目录下所有json文件
  * @param {string} filePath 可以是目录也可以是文件
  */
-export const getJsonFileList = filePath => {
+const getJsonFileList = filePath => {
   let allFilePaths = [];
   const stats = fs.lstatSync(filePath);
   if (stats.isFile()) {
@@ -42,7 +42,7 @@ export const getJsonFileList = filePath => {
  * @param {string} filePath 必须是文件路径
  * @returns
  */
-export const loadFileContent = filePath => {
+const loadFileContent = filePath => {
   let config;
   try {
     const stats = fs.statSync(filePath);
@@ -65,7 +65,7 @@ export const loadFileContent = filePath => {
  * @param {string} filePath
  * @returns
  */
-export const genConfigToRoutes = filePath => {
+const genConfigToRoutes = filePath => {
   const config = loadFileContent(filePath);
   if (!config) {
     return;
@@ -116,7 +116,7 @@ export const genConfigToRoutes = filePath => {
  * 校验路由配置数据
  * @param {Object} route
  */
-export const validateRoute = (route, allData) => {
+const validateRoute = (route, allData) => {
   const { restful, method, path } = route;
   if (!restful) {
     if (!method) {
@@ -141,7 +141,7 @@ export const validateRoute = (route, allData) => {
   }
 };
 
-export const loadFileToConfig = filePath => {
+const loadFileToConfig = filePath => {
   if (global.jsonConfig[filePath]) {
     // 删除旧的peizhi
     logger.debug(`delete old config: ${filePath}`);
@@ -174,9 +174,18 @@ export const loadFileToConfig = filePath => {
  * @param {string} filePath 可以是目录也可以是文件
  * @returns
  */
-export const initJsonFiles = filePath => {
+const initJsonFiles = filePath => {
   const files = getJsonFileList(filePath);
   for (let jsonFile of files) {
     loadFileToConfig(jsonFile);
   }
+};
+
+module.exports = {
+  getJsonFileList,
+  loadFileContent,
+  genConfigToRoutes,
+  validateRoute,
+  loadFileToConfig,
+  initJsonFiles,
 };

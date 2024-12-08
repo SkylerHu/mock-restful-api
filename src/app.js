@@ -1,9 +1,9 @@
-import { join as pathJoin } from "node:path/posix";
-import express from "express";
-import morgan from "morgan";
+const { join: pathJoin } = require("node:path/posix");
+const morgan = require("morgan");
+const express = require("express");
 
-import logger from "./logger.js";
-import { initRestfulResponse } from "./handler.js";
+const logger = require("./logger.js");
+const { initRestfulResponse } = require("./handler.js");
 
 const initApp = option => {
   const { prefix = "/" } = option || {};
@@ -28,7 +28,7 @@ const initApp = option => {
       const _method = method.toLowerCase();
       // 添加路由到app上
       const _path = pathJoin(prefix, reqPath);
-      logger.info(`app add route  ${_method.padEnd(8, " ")} ${_path}`);
+      logger.debug(`app add route  ${_method.padEnd(8, " ")} ${_path}`);
       app[_method](_path, (req, res) => {
         let respConf = response || {};
         if (restful) {
@@ -62,4 +62,4 @@ const initApp = option => {
   return app;
 };
 
-export default initApp;
+module.exports = initApp;

@@ -1,8 +1,8 @@
-import { test, expect, describe, afterEach } from "@jest/globals";
+const { test, expect, describe, afterEach } = require("@jest/globals");
 
-import logger from "../src/logger.js";
-import * as loadFile from "../src/loadFile.js";
-import { validateConfig } from "../src/validator.js";
+const logger = require("../src/logger.js");
+const loadFile = require("../src/loadFile.js");
+const { validateConfig } = require("../src/validator.js");
 
 const TEST_FILE_PATH = "fixtures/open/custom.json";
 const TEST_RESTFUL_FILE = "fixtures/users.json";

@@ -1,6 +1,7 @@
 {
   "env": {
     "node": true,
+    "commonjs": true,
     "es6": true,
     "jest": true
   },
@@ -16,6 +17,7 @@
   "parser": "babel-eslint",
   "rules": {
     "no-caller": 2,
+    "no-console": 2,
     "no-undef": 2,
     "no-unused-vars": 2,
     "no-use-before-define": 0,

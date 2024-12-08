@@ -1,6 +1,6 @@
-import { test, expect, describe } from "@jest/globals";
+const { test, expect, describe } = require("@jest/globals");
 
-import * as utils from "../src/utils.js";
+const utils = require("../src/utils.js");
 
 describe("test utils", () => {
   test("test utils judge value type", () => {

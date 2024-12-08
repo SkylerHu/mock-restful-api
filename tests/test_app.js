@@ -1,9 +1,9 @@
-import { test, describe, beforeAll, afterAll, expect } from "@jest/globals";
+const { test, describe, beforeAll, afterAll, expect } = require("@jest/globals");
 
-import request from "supertest";
+const request = require("supertest");
 
-import initApp from "../src/app.js";
-import { initJsonFiles } from "../src/loadFile.js";
+const initApp = require("../src/app.js");
+const { initJsonFiles } = require("../src/loadFile.js");
 
 global.app;
 

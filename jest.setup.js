@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+const { jest } = require("@jest/globals");
 
 jest.mock("./src/logger.js", () => ({
   info: jest.fn(),

@@ -1,27 +1,28 @@
-import fs from "fs";
-import { join as pathJoin } from "node:path/posix";
-import { spawn } from "child_process";
-import { program } from "commander";
+#!/usr/bin/env node
 
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+const fs = require("fs");
+const { join:  pathJoin } = require("node:path/posix");
+const { spawn } = require("child_process");
+const { program } = require("commander");
 
-import logger from "./logger.js";
-
-// ES Module 不支持 __dirname，自定义一个
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const logger = require("./logger.js");
 
 // 定义输入参数
-program.option("--path <string>", "mock数据文件的路径，mock json file path", "fixtures");
+program.option("-p, --port <number>", "mock服务端口，mock service port number", 3001)
+  .option("--path <string>", "mock数据文件的路径，mock json file path", "fixtures")
+  .option("--prefix <string>", "接口path的前缀，api path prefix", "/")
+  .option("--ignore_watch", "忽略监听path参数目录下文件变动而重启服务，ignore watch path for reload app", false)
+  .option("-l --level <string>", "日志级别: debug/info/notice/warn/error", "debug");
 program.parse();
 
-const { path: filePath } = program.opts();
+const { path: filePath, ignore_watch: ignoreWatch, port, prefix, level } = program.opts();
+
+const env = { ...process.env, path: filePath, port, prefix, level };
 
 let child;
 
 const runAppInChild = () => {
-  child = spawn("node", [pathJoin(__dirname, "index.js"), ...process.argv.slice(2)]);
+  child = spawn("node", [pathJoin(__dirname, "index.js")], { env });
 
   child.stdout.on("data", data => {
     process.stdout.write(`${data}`);
@@ -31,15 +32,20 @@ const runAppInChild = () => {
   });
 };
 
-let timer;
-fs.watch(filePath, (eventType, filename) => {
-  logger.warn(`File ${eventType}: ${filename} ...`);
-  clearTimeout(timer);
-  timer = setTimeout(() => {
-    console.log("\n---------------- restarting app --------------------------------\n");
-    child.kill(); // 杀掉旧的进程
-    runAppInChild();
-  }, 1000);
-});
+if (ignoreWatch) {
+  logger.warn("ignore watch mock file change.");
+} else {
+  let timer;
+  fs.watch(filePath, (eventType, filename) => {
+    logger.warn(`File ${eventType}: ${filename} ...`);
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      // eslint-disable-next-line no-console
+      console.log("\n---------------- reloading app --------------------------------\n");
+      child.kill(); // 杀掉旧的进程
+      runAppInChild();
+    }, 1000);
+  });
+}
 
 runAppInChild();

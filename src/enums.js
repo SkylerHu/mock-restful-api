@@ -1,6 +1,6 @@
-import Enum from "js-enumerate";
+const Enum = require("js-enumerate");
 
-export const LookupEnum = new Enum([
+const LookupEnum = new Enum([
   { key: "EXACT", value: "exact", label: "精确匹配" },
   { key: "IS_NULL", value: "isnull", label: "是否为空" },
   { key: "IN", value: "in", label: "限定枚举值" },
@@ -16,7 +16,7 @@ export const LookupEnum = new Enum([
 ]);
 
 
-export const MethodEnum = new Enum({
+const MethodEnum = new Enum({
   GET: "GET",
   POST: "POST",
   DELETE: "DELETE",
@@ -26,4 +26,10 @@ export const MethodEnum = new Enum({
   OPTIONS: "OPTIONS",
 });
 
-export const ALLOW_METHODS = MethodEnum.map(member => member.value.toUpperCase()).concat(MethodEnum.map(member => member.value.toLowerCase()));
+const ALLOW_METHODS = MethodEnum.map(member => member.value.toUpperCase()).concat(MethodEnum.map(member => member.value.toLowerCase()));
+
+module.exports = {
+  MethodEnum,
+  LookupEnum,
+  ALLOW_METHODS,
+};

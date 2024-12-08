@@ -1,7 +1,7 @@
-import { validateSubmitData } from "./validator.js";
-import * as utils from "./utils.js";
-import logger from "./logger.js";
-import { LookupEnum, MethodEnum } from "./enums.js";
+const { validateSubmitData } = require("./validator.js");
+const utils = require("./utils.js");
+const logger = require("./logger.js");
+const { LookupEnum, MethodEnum } = require("./enums.js");
 
 const FIELD_SEPARATOR = "__";
 
@@ -11,7 +11,7 @@ const FIELD_SEPARATOR = "__";
  * @param {string} fieldName
  * @returns
  */
-export const findRowValueByFieldName = (row, fieldName) => {
+const findRowValueByFieldName = (row, fieldName) => {
   let value;
   if (utils.isBlank(fieldName) || !utils.isDict(row)) {
     // 字段为空； row 为空或者数组时不做处理
@@ -40,7 +40,7 @@ export const findRowValueByFieldName = (row, fieldName) => {
  * @param {any} targetValue
  * @returns
  */
-export const transTargetValueType = (value, targetValue) => {
+const transTargetValueType = (value, targetValue) => {
   if (utils.isAbsNumber(value)) {
     if (utils.isArray(targetValue)) {
       targetValue = targetValue.map(v => (utils.isBlank(v) ? v : Number(v)));
@@ -91,7 +91,7 @@ const parseCsvValue = value => {
  * @param {any} targetValue
  * @returns bool, 满足条件返回true
  */
-export const compareValueByLookup = (value, lookup, targetValue) => {
+const compareValueByLookup = (value, lookup, targetValue) => {
   if (utils.isBlank(targetValue)) {
     // 无目标，则默认匹配
     return true;
@@ -189,7 +189,7 @@ export const compareValueByLookup = (value, lookup, targetValue) => {
   return success;
 };
 
-export const handleFilterRows = (filterFields, searchFields, rows, query) => {
+const handleFilterRows = (filterFields, searchFields, rows, query) => {
   if (utils.isBlank(query)) {
     return rows;
   }
@@ -242,7 +242,7 @@ export const handleFilterRows = (filterFields, searchFields, rows, query) => {
   return results;
 };
 
-export const handleSortRows = (rows, ordering, orderingFields) => {
+const handleSortRows = (rows, ordering, orderingFields) => {
   const results = [...rows];
   let orderList = parseCsvValue(ordering);
   if (orderList.length === 0) {
@@ -300,7 +300,7 @@ export const handleSortRows = (rows, ordering, orderingFields) => {
   return results;
 };
 
-export const queryRows = (query, config) => {
+const queryRows = (query, config) => {
   const { filter_fields: filterFields, search_fields: searchFields, ordering: defaultOrdering, ordering_fields: orderingFields, rows } = config;
   // 刷选 + 搜索
   let results = handleFilterRows(filterFields, searchFields, rows, query);
@@ -313,7 +313,7 @@ export const queryRows = (query, config) => {
   return results;
 };
 
-export const findRowByPk = (pkValue, query, config) => {
+const findRowByPk = (pkValue, query, config) => {
   let results = queryRows(query, config);
   const { pk_field: pkField } = config;
   results = results.filter(row => utils.isDict(row) && row[pkField] == pkValue);
@@ -321,7 +321,7 @@ export const findRowByPk = (pkValue, query, config) => {
   return row;
 };
 
-export const genRowCreateNewPk = (pkField, rows) => {
+const genRowCreateNewPk = (pkField, rows) => {
   const pks = rows.map(item => item[pkField]).filter(v => v && utils.isNumber(v));
   let last = 0;
   if (pks.length > 0) {
@@ -332,7 +332,7 @@ export const genRowCreateNewPk = (pkField, rows) => {
   return pk;
 };
 
-export const initRestfulResponse = (req, filePath, route) => {
+const initRestfulResponse = (req, filePath, route) => {
   const configData = global.jsonConfig[filePath];
   if (!utils.isDict(configData)) {
     return { code: 404, text: `path=${route.path} Not Found` };
@@ -431,4 +431,16 @@ export const initRestfulResponse = (req, filePath, route) => {
   }
 
   return response;
+};
+
+module.exports = {
+  findRowValueByFieldName,
+  transTargetValueType,
+  compareValueByLookup,
+  handleFilterRows,
+  handleSortRows,
+  queryRows,
+  findRowByPk,
+  genRowCreateNewPk,
+  initRestfulResponse
 };

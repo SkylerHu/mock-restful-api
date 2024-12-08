@@ -1,10 +1,9 @@
 {
   "name": "mock-restful-api",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": "SkylerHu",
   "private": false,
-  "type": "module",
-  "main": "src/app.js",
+  "main": "src/service.js",
   "bin": {
     "mock-restful-api": "src/service.js"
   },
@@ -30,7 +29,7 @@
     "commander": "^12.1.0",
     "express": "^4.21.1",
     "joi": "^17.13.3",
-    "js-enumerate": "^1.1.1",
+    "js-enumerate": "^1.1.2",
     "morgan": "^1.10.0",
     "winston": "^3.17.0"
   },

@@ -1,9 +1,9 @@
-import Joi from "joi";
-import * as utils from "./utils.js";
-import logger from "./logger.js";
-import { LookupEnum, ALLOW_METHODS } from "./enums.js";
+const Joi = require("joi");
+const utils = require("./utils.js");
+const logger = require("./logger.js");
+const { LookupEnum, ALLOW_METHODS } = require("./enums.js");
 
-export const handleValidateResult = result => {
+const handleValidateResult = result => {
   if (result.error) {
     const errMsgs = [];
     result.error.details.forEach(err => {
@@ -56,7 +56,7 @@ const buildJoiSchema = rules => {
   return Joi.object(schema).unknown();
 };
 
-export const validateSubmitData = (data, rules, partial = false) => {
+const validateSubmitData = (data, rules, partial = false) => {
   if (!utils.isDict(data)) {
     throw Error("The resutful created data submitted by post can only be a dictionary.");
   }
@@ -80,7 +80,7 @@ export const validateSubmitData = (data, rules, partial = false) => {
   return result.value;
 };
 
-export const validateConfig = data => {
+const validateConfig = data => {
   const schema = Joi.object({
     restful: Joi.string(),
     page_size: Joi.number().min(1).integer(),
@@ -122,4 +122,10 @@ export const validateConfig = data => {
   const result = schema.validate(data);
   handleValidateResult(result);
   return result.value;
+};
+
+module.exports = {
+  handleValidateResult,
+  validateSubmitData,
+  validateConfig,
 };

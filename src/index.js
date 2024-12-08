@@ -1,20 +1,8 @@
-import { program } from "commander";
+const logger = require("./logger.js");
+const initApp = require("./app.js");
+const { initJsonFiles } = require("./loadFile.js");
 
-import logger from "./logger.js";
-import initApp from "./app.js";
-import { initJsonFiles } from "./loadFile.js";
-
-// 定义输入参数
-program.option("-p, --port <number>", "mock服务端口，mock service port number", 3001)
-  .option("--path <string>", "mock数据文件的路径，mock json file path", "fixtures")
-  .option("--prefix <string>", "接口path的前缀，api path prefix", "/");
-program.parse();
-
-const option = program.opts();
-
-console.log("start app options:", option);
-
-const { path: filePath, port, prefix } = option;
+const { path: filePath, port, prefix } = process.env;
 
 initJsonFiles(filePath);
 

@@ -1,10 +1,10 @@
-import { test, expect, describe, beforeEach, afterEach } from "@jest/globals";
+const { test, expect, describe, beforeEach, afterEach } = require("@jest/globals");
 
-import * as handler from "../src/handler.js";
-import { loadFileToConfig } from "../src/loadFile.js";
-import { LookupEnum, MethodEnum } from "../src/enums.js";
-import { validateSubmitData } from "../src/validator.js";
-import logger from "../src/logger.js";
+const handler = require("../src/handler.js");
+const { loadFileToConfig } = require("../src/loadFile.js");
+const { LookupEnum, MethodEnum } = require("../src/enums.js");
+const { validateSubmitData } = require("../src/validator.js");
+const logger = require("../src/logger.js");
 
 // 不能更改，会影响测试用例
 const TEST_ROWS = [
