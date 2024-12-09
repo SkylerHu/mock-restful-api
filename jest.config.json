@@ -1,17 +1,23 @@
 {
   "verbose": true,
   "collectCoverage": true,
+  "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
   "coverageDirectory": "./.coverage",
   "moduleFileExtensions": [
     "js",
+    "jsx",
+    "ts",
+    "tsx",
     "json"
   ],
   "testMatch": [
     "**/tests/**/*.js"
   ],
   "collectCoverageFrom": [
-    "src/**/*.{js,jsx}",
-    "!**/node_modules/**"
-  ],
-  "testEnvironment": "node"
+    "src/**/*.{js,jsx,ts}",
+    "!**/node_modules/**",
+    "!src/service.js",
+    "!src/index.js",
+    "!src/logger.js"
+  ]
 }

@@ -1,8 +1,8 @@
-import fs from "fs";
-import path from "path";
-import urlJoin from "url-join";
-
-import { logger } from "./utils.js";
+const fs = require("fs");
+const { join: pathJoin } = require("node:path/posix");
+const logger = require("./logger.js");
+const { MethodEnum } = require("./enums.js");
+const { validateConfig } = require("./validator.js");
 
 global.jsonConfig = {
   // 格式示例
@@ -30,7 +30,7 @@ const getJsonFileList = filePath => {
     const files = fs.readdirSync(filePath);
     files.forEach(fileName => {
       // fileName 是文件名称（不包含文件路径）
-      const childPath = path.join(filePath, fileName);
+      const childPath = pathJoin(filePath, fileName);
       allFilePaths = allFilePaths.concat(getJsonFileList(childPath));
     });
   }
@@ -46,12 +46,8 @@ const loadFileContent = filePath => {
   let config;
   try {
     const stats = fs.statSync(filePath);
-    if (stats.isDirectory()) {
-      logger.warn(`The filePath is directory: ${filePath}`);
-      return;
-    }
     if (!stats.isFile()) {
-      logger.warn(`The file does not exist or has been deleted: ${filePath}`);
+      logger.warn(`The filePath is not a file or has been deleted: ${filePath}`);
       return;
     }
     const content = fs.readFileSync(filePath, "utf8");
@@ -59,17 +55,68 @@ const loadFileContent = filePath => {
     // logger.debug(`load file success: ${filePath}`);
     config["file_path"] = filePath;
   } catch (err) {
-    logger.error(err);
-    logger.error(`load file fail: ${filePath}`);
+    logger.error(`load file fail: ${filePath} ${err}`);
   }
   return config;
+};
+
+/**
+ * 加载配置文件生成路由routes
+ * @param {string} filePath
+ * @returns
+ */
+const genConfigToRoutes = filePath => {
+  const config = loadFileContent(filePath);
+  if (!config) {
+    return;
+  }
+  try {
+    validateConfig(config);
+  } catch (err) {
+    logger.error(`The file content is illegal: ${filePath} ${err}`);
+    return;
+  }
+  // 重置该文件配置
+  let routes = [];
+
+  const { restful, actions, apis } = config;
+  if (restful) {
+    // 判断是否要添加斜线后缀
+    const appendSlash = restful.endsWith("/") ? "/" : "";
+    // pk_field 不仅仅是递增的数字，可能使用其他的例如uuid
+    const detailUrl = pathJoin(restful, ":pk([\\w-]+)", appendSlash);
+    // 添加restful接口操作
+    const baseRoute = { restful };
+    routes = [
+      { ...baseRoute, method: MethodEnum.GET, path: restful }, // 列表
+      { ...baseRoute, method: MethodEnum.POST, path: restful }, // 创建
+      { ...baseRoute, method: MethodEnum.GET, path: detailUrl, detail: true }, // 详情
+      { ...baseRoute, method: MethodEnum.PATCH, path: detailUrl, detail: true }, // 部分字段修改
+      { ...baseRoute, method: MethodEnum.PUT, path: detailUrl, detail: true }, // 修改
+      { ...baseRoute, method: MethodEnum.DELETE, path: detailUrl, detail: true }, // 删除
+    ];
+    // 额外操作
+    (actions || []).forEach(action => {
+      const item = {
+        method: action.method.toLowerCase(),
+        path: pathJoin(action.detail ? detailUrl : restful, action.url_path),
+        response: action.response,
+      };
+      routes.push(item);
+    });
+  }
+  if (apis) {
+    routes = routes.concat(apis);
+  }
+  // 最后添加相关配置
+  return { routes, config: { rows: [], pk_field: "id", page_size: 20, ...config } };
 };
 
 /**
  * 校验路由配置数据
  * @param {Object} route
  */
-const validateRoute = route => {
+const validateRoute = (route, allData) => {
   const { restful, method, path } = route;
   if (!restful) {
     if (!method) {
@@ -79,94 +126,47 @@ const validateRoute = route => {
       throw Error(`"path" cannot be empty`);
     }
   }
-  const filePaths = Object.keys(global.jsonConfig);
-  for (let i = 0; i <= filePaths.length; i++) {
-    const filePath = filePaths[i];
-    const { config, routes } = global.jsonConfig[filePath] || {};
+  for (let filePath in allData) {
+    const { config, routes } = allData[filePath];
     if (restful && restful === config?.restful) {
       // restful接口重复
       throw Error(`The restful interface already exists in ${filePath}: restful=${restful}`);
     }
-    for (let j = 0; j < routes?.length; j++) {
-      const _route = routes[j];
-      if (method.toLowerCase() === _route.method.toLowerCase() && path === _route.path) {
+    for (let item of routes) {
+      if (method.toLowerCase() === item.method.toLowerCase() && path === item.path) {
         // 其他接口重复
-        throw Error(`The current path already exists in ${filePath}: method=${method} path=${path}`);
+        throw Error(`The current method+path already exists in ${filePath}: method=${method} path=${path}`);
       }
     }
   }
 };
 
-/**
- * 将 filePath 中 配置的 route 加入到全局变量中
- * @param {string} filePath
- * @param {Object} route
- */
-const appendRoute = (filePath, route) => {
-  try {
-    validateRoute(route);
-    global.jsonConfig[filePath].routes.push(route);
-    logger.debug(`config add route  ${route.method.padEnd(8, " ")}${route.path}`);
-  } catch (err) {
-    logger.error(err);
-    logger.error(`append route fail: ${filePath} method=${route.method} path=${route.path}`);
-  }
-};
-
-/**
- * 加载配置文件
- * @param {string} filePath
- * @returns
- */
-export const loadFileToConfig = filePath => {
+const loadFileToConfig = filePath => {
   if (global.jsonConfig[filePath]) {
     // 删除旧的peizhi
     logger.debug(`delete old config: ${filePath}`);
     delete global.jsonConfig[filePath];
   }
-  const config = loadFileContent(filePath);
-  if (!config) {
+  const data = genConfigToRoutes(filePath);
+  if (!data) {
     logger.error(`load config fail: ${filePath}`);
     return;
   }
   logger.info(`loading config: ${filePath}`);
-  // 重置该文件配置
-  global.jsonConfig[filePath] = {
-    // config: {}, // config值暂不添加，避免影响 validateRoute 中的校验
-    routes: [],
-  };
+  const { routes, config } = data;
 
-  const { restful, actions, apis } = config;
-  if (restful) {
-    // 判断是否要添加斜线后缀
-    const appendSlash = restful.endsWith("/") ? "/" : "";
-    // pk_field 不仅仅是递增的数字，可能使用其他的例如uuid
-    const detailUrl = urlJoin(restful, "([\\w-]+)", appendSlash);
-    // 添加restful接口操作
-    const baseRoute = { restful };
-    const initRoutes = [
-      { ...baseRoute, method: "GET", path: restful }, // 列表
-      { ...baseRoute, method: "POST", path: restful }, // 创建
-      { ...baseRoute, method: "GET", path: detailUrl }, // 详情
-      { ...baseRoute, method: "PATCH", path: detailUrl }, // 部分字段修改
-      { ...baseRoute, method: "PUT", path: detailUrl }, // 修改
-      { ...baseRoute, method: "DELETE", path: detailUrl }, // 删除
-    ];
-    initRoutes.forEach(item => appendRoute(filePath, item));
-    // 额外操作
-    (actions || []).forEach(action => {
-      const item = {
-        method: action.method.toLowerCase(),
-        path: urlJoin(action.detail ? detailUrl : restful, action.url_path),
-        response: action.response,
-      };
-      appendRoute(filePath, item);
-    });
+  const fileConfig = { config, routes: [] };
+  for (let route of routes) {
+    const { path: urlPath } = route;
+    try {
+      validateRoute(route, global.jsonConfig);
+      fileConfig.routes.push(route);
+      logger.debug(`config add route  ${route.method.padEnd(8, " ")}${urlPath}`);
+    } catch (err) {
+      logger.error(`append route fail: ${filePath} ${err}`);
+    }
   }
-  (apis || []).forEach(item => appendRoute(filePath, item));
-
-  // 最后添加相关配置
-  global.jsonConfig[filePath]["config"] = { rows: [], pk_field: "id", page_size: 20, ...config };
+  global.jsonConfig[filePath] = fileConfig;
 };
 
 /**
@@ -174,12 +174,18 @@ export const loadFileToConfig = filePath => {
  * @param {string} filePath 可以是目录也可以是文件
  * @returns
  */
-export const initJsonFiles = filePath => {
-  let routes = [];
+const initJsonFiles = filePath => {
   const files = getJsonFileList(filePath);
-  for (let i = 0; i < files.length; i++) {
-    const jsonFile = files[i];
+  for (let jsonFile of files) {
     loadFileToConfig(jsonFile);
   }
-  return routes;
+};
+
+module.exports = {
+  getJsonFileList,
+  loadFileContent,
+  genConfigToRoutes,
+  validateRoute,
+  loadFileToConfig,
+  initJsonFiles,
 };

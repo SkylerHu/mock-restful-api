@@ -1,10 +1,9 @@
 {
   "name": "mock-restful-api",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": "SkylerHu",
   "private": false,
-  "type": "module",
-  "main": "src/app.js",
+  "main": "src/service.js",
   "bin": {
     "mock-restful-api": "src/service.js"
   },
@@ -27,14 +26,15 @@
     "upload-cov": "coveralls < .coverage/lcov.info"
   },
   "dependencies": {
-    "express": "~4.21.1",
+    "commander": "^12.1.0",
+    "express": "^4.21.1",
+    "joi": "^17.13.3",
+    "js-enumerate": "^1.1.2",
     "morgan": "^1.10.0",
-    "url-join": "^5.0.0",
-    "winston": "~3.17.0"
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@babel/core": "~7.24.4",
-    "@babel/plugin-proposal-class-properties": "~7.18.6",
     "@babel/preset-env": "~7.24.4",
     "@commitlint/cli": "~17.8.1",
     "@commitlint/config-conventional": "~17.8.1",
@@ -47,8 +47,8 @@
     "lint-staged": "~12.5.0",
     "supertest": "~6.3.4"
   },
-  "description": "",
-  "keywords": [],
+  "description": "Interface mock service implemented according to RESTful.",
+  "keywords": ["mock", "restful", "mock-restful", "mock-api", "mock-service"],
   "homepage": "https://github.com/SkylerHu/mock-restful-api",
   "repository": {
     "type": "git",

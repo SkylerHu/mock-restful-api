@@ -1,47 +1,43 @@
-import winston from "winston";
+const isNull = value => value === undefined || value === null;
 
-export const logger = winston.createLogger({
-  level: "debug",
-  format: winston.format.combine(
-    winston.format.errors({ stack: true }), // 自动捕获堆栈信息
-    winston.format.colorize(),
-    // winston.format.simple(),
-    winston.format.printf((info) => {
-      let message = `${info.level}: ${info.message}`;
-      if (info.stack) {
-        // 添加换行符处理以确保堆栈信息正确换行
-        message += `\n${info.stack}`;
-      }
-      return message;
-    }),
-  ),
-  transports: [new winston.transports.Console()],
-});
+const isBlank = value => isNull(value) || value === "";
 
-export const isNull = value => value === undefined || value === null;
+const isBooleanTrue = value => ["true", "True", "1", 1, true].includes(value);
 
-export const isEmpty = value => isNull(value) || value === "";
+const isBooleanFalse = value => ["false", "False", "0", 0, false].includes(value);
 
-export const isArray = value => value instanceof Array;
+const isAbsBoolean = value => typeof value === "boolean";
 
-export const isDict = value => typeof value === "object";
+const isBoolean = value => isBooleanTrue(value) || isBooleanFalse(value);
 
-export const isBooleanTrue = value => ["true", "True", "1", 1, true].includes(value);
-
-export const isBooleanFalse = value => ["false", "False", "0", 0, false].includes(value);
-
-export const isAbsBoolean = value => typeof value === "boolean";
-
-export const isBoolean = value => isBooleanTrue(value) || isBooleanFalse(value);
-
-export const isString = value => typeof value === "string";
+const isString = value => typeof value === "string";
 
 // 是绝对数字
-export const isAbsNumber = value => typeof value === "number";
+const isAbsNumber = value => typeof value === "number" && isFinite(value);
 
 // 可能是数字、字符串类型的数值
-export const isNumber = value => !Number.isNaN(Number(value));
-// 允许进行对比的类型
-export const allowCompareRange = value => isEmpty(value) && (isString(value) || isNumber(value));
+const isNumber = value => isAbsNumber(value) || (isString(value) && !Number.isNaN(Number(value)));
 
-export const formatJsonToStr = data => JSON.stringify(data, null, " ");
+// 或者：value instanceof Array
+const isArray = value => Array.isArray(value);
+
+// 注意 typeof不准确，null / [] 都是 object
+const isDict = value => Object.prototype.toString.call(value) === "[object Object]";
+
+// 允许进行对比的类型
+const allowCompareRange = value => isBlank(value) || isBoolean(value) || isString(value) || isNumber(value);
+
+module.exports = {
+  isNull,
+  isBlank,
+  isBooleanFalse,
+  isBooleanTrue,
+  isBoolean,
+  isAbsBoolean,
+  isString,
+  isAbsNumber,
+  isNumber,
+  isArray,
+  isDict,
+  allowCompareRange,
+};
