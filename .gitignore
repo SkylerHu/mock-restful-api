@@ -2,7 +2,6 @@
 
 # dependencies
 node_modules/
-package-lock.json
 .eslintcache
 .idea/
 
@@ -17,3 +16,5 @@ dist/
 .DS_Store
 
 npm-debug.log*
+package-lock.json
+
