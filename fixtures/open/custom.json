@@ -28,9 +28,38 @@
     },
     {
       "method": "HEAD",
-      "path": "web/enums/",
+      "path": "web/enums/head/",
       "response": {
-        "code": 404
+        "code": 400,
+        "text": "fail"
+      }
+    },
+    {
+      "method": "get",
+      "path": "web/download/",
+      "response": {
+        "code": 200,
+        "file": "./fixtures/open/test.txt"
+      }
+    },
+    {
+      "method": "get",
+      "path": "web/download/abs/",
+      "response": {
+        "code": 200,
+        "file": "/tmp/test.txt"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "method": "POST",
+      "url_path": "create/",
+      "detail": false,
+      "response": {
+        "code": 201,
+        "json": { "message": "success" },
+        "headers": {}
       }
     }
   ]
