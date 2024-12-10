@@ -47,8 +47,8 @@
     "lint-staged": "~12.5.0",
     "supertest": "~6.3.4"
   },
-  "description": "Interface mock service implemented according to RESTful.",
-  "keywords": ["mock", "restful", "mock-restful", "mock-api", "mock-service"],
+  "description": "This is dev support mock RESTful API. Refer to django-rest-framework implementation.",
+  "keywords": ["mock", "mocker", "restful", "django-rest-framework", "mock-restful", "mock-api", "mock-service"],
   "homepage": "https://github.com/SkylerHu/mock-restful-api",
   "repository": {
     "type": "git",

@@ -5,9 +5,9 @@
 [![Coveralls](https://img.shields.io/coverallsCoverage/github/SkylerHu/mock-restful-api)](https://github.com/SkylerHu/mock-restful-api)
 [![GitHub License](https://img.shields.io/github/license/SkylerHu/mock-restful-api)](https://github.com/SkylerHu/mock-restful-api)
 
-依赖express框架实现的接口mock服务，遵循restful接口标准。支持列表刷选、模糊搜索、排序，增删改查等操作。
+依赖 express 框架实现的接口 mock 服务，参照 django-rest-framework 实现。支持列表刷选、模糊搜索、排序，增删改查等操作。
 
-The interface mock service is implemented by the express framework and complies with the restful interface standard. It supports list selection, fuzzy search, sorting, addition, deletion, modification and other operations.
+The interface mock service is implemented by the express framework, and is implemented with reference to django-rest-framework. It supports list selection, fuzzy search, sorting, addition, deletion, modification, and other operations.
 
 可查看版本变更记录[ChangeLog](./docs/CHANGELOG-1.x.md)
 
@@ -99,15 +99,13 @@ Options:
 
 ```json
 {
-  ...
   "filter_fields": {
     "id": ["exact", "in"],
     "username": ["exact", "in", "contains", "startswith", "endswith", "regex"],
     "age": ["exact", "range", "lt", "lte", "gt", "gte", "isnull"],
     "created_at": ["range"],
     "city__name": ["exact", "in"]
-  },
-  ...
+  }
 }
 ```
 
@@ -139,10 +137,8 @@ Options:
   {
     "id": 1,
     "username": "admin",
-    ...
     "city": {
       "name": "beijing"
-      ...
     }
   }
 ]
@@ -154,9 +150,7 @@ Options:
 
 ```json
 {
-  ...
-  "search_fields": ["username", "nickname", "city__name"],
-  ...
+  "search_fields": ["username", "nickname", "city__name"]
 }
 ```
 
@@ -168,10 +162,8 @@ Options:
 
 ```json
 {
-  ...
   "ordering_fields": ["id", "name"],
-  "ordering": ["id"],  // 定义的是默认排序方式，等同query参数传递 ordering=id
-  ...
+  "ordering": ["id"]
 }
 ```
 
@@ -191,16 +183,19 @@ Options:
 
 ```json
 {
-  ...
   "rules": {
-    "username": { "type": "string", "pattern": "\\w+", "required": true },  // 字符串正则，且是必须的字段
-    "is_active": { "type": "boolean" },  // 定义bool类型
-    "age": { "type": "number", "integer": true, "min": 0, "max": 100 }, // 数值定义取值范围
-    "gender": { "type": "string", "valid": ["male", "female"] }  // 字符串，valid 定义枚举值范围
-  },
-  ...
+    "username": { "type": "string", "pattern": "\\w+", "required": true },
+    "is_active": { "type": "boolean" },
+    "age": { "type": "number", "integer": true, "min": 0, "max": 100 },
+    "gender": { "type": "string", "valid": ["male", "female"] }
+  }
 }
 ```
+
+- `username` 字符串正则，且是必须的字段
+- `is_active` 定义 bool 类型
+- `age` 数值定义取值范围
+- `gender` 字符串，valid 定义枚举值范围
 
 校验规则通过 `joi` 实现，将 json 配置转成成 Joi 的校验类。具体支持的类型和方法参照 [https://joi.dev/api/](https://joi.dev/api/)
 
@@ -210,21 +205,19 @@ actions 是对 restful 的扩展，依赖 `restful` 的定义，示例：
 
 ```json
 {
-  ...
   "actions": [
     {
       "method": "POST",
       "url_path": "create/",
-      "response": {...}
+      "response": {}
     },
     {
       "method": "get",
       "url_path": "releated/",
       "detail": true,
-      "response": {...}
+      "response": {}
     }
-  ],
-  ...
+  ]
 }
 ```
 
@@ -272,7 +265,9 @@ actions 是对 restful 的扩展，依赖 `restful` 的定义，示例：
 
 #### 列表接口
 
-    curl "http://0.0.0.0:3001/web/users/?is_active=1&ordering=-id&city__name=anhui&search=sky"
+```shell
+curl "http://0.0.0.0:3001/web/users/?is_active=1&ordering=-id&city__name=anhui&search=sky"
+```
 
 返回状态码为 `200`：
 
@@ -306,7 +301,9 @@ actions 是对 restful 的扩展，依赖 `restful` 的定义，示例：
 
 ### 创建记录
 
-    curl -XPOST "http://0.0.0.0:3001/web/users/" -H "Content-Type: application/json" -d '{"username":"test"}'
+```shell
+curl -XPOST "http://0.0.0.0:3001/web/users/" -H "Content-Type: application/json" -d '{"username":"test"}'
+```
 
 返回状态码为 `201`：
 
@@ -319,7 +316,9 @@ actions 是对 restful 的扩展，依赖 `restful` 的定义，示例：
 
 ### 修改接口
 
-    curl -XPATCH "http://0.0.0.0:3001/web/users/6/" -H "Content-Type: application/json" -d '{"username":"test2"}'
+```shell
+curl -XPATCH "http://0.0.0.0:3001/web/users/6/" -H "Content-Type: application/json" -d '{"username":"test2"}'
+```
 
 返回状态码为 `200`：
 
@@ -332,7 +331,9 @@ actions 是对 restful 的扩展，依赖 `restful` 的定义，示例：
 
 ### 详情接口
 
-    curl "http://0.0.0.0:3001/web/users/6/"
+```shell
+curl "http://0.0.0.0:3001/web/users/6/"
+```
 
 返回状态码为 `200`：
 
@@ -345,7 +346,9 @@ actions 是对 restful 的扩展，依赖 `restful` 的定义，示例：
 
 ### 删除接口
 
-    curl -XDELETE "http://0.0.0.0:3001/web/users/6/"
+```shell
+curl -XDELETE "http://0.0.0.0:3001/web/users/6/"
+```
 
 返回状态码为 `204`，无返回值。
 
@@ -353,7 +356,7 @@ actions 是对 restful 的扩展，依赖 `restful` 的定义，示例：
 
 以 React 项目为例，在 `src/setupProxy.js` 文件中增加如下配置：
 
-```js
+```javascript
 const createProxyMiddleware = require("http-proxy-middleware");
 
 module.exports = function (app) {
