@@ -13,19 +13,19 @@ The interface mock service is implemented by the express framework, and is imple
 
 ## 1. 安装
 
-## 安装
+### 安装
 
     npm install mock-restful-api --save-dev
 
 启动 mock 服务执行 `npx mock-restful-api --path <fixtures dir>`
 
-## 全局安装
+### 全局安装
 
     npm install -g mock-restful-api
 
 启动 mock 服务执行 `mock-restful-api --path <fixtures dir>`
 
-## 命令行参数支持
+### 命令行参数支持
 
 `mock-restful-api -h` 可查看支持的参数：
 
@@ -64,7 +64,7 @@ Options:
 | actions         | array   | 基于 restful 定义的其他操作          |                                                  |
 | +method         | string  | 请求方法, GET/POST 等                |                                                  |
 | +url_path       | string  | action 路径                          | eg: "cancel"，则 path 为 /web/users/cancel/      |
-| +detail         | bool    | 是否是详情 action，默认 false        | 为 true 时 path 为 /web/users/<pk>/cancel/       |
+| +detail         | bool    | 是否是详情 action，默认 false        | 为 true 时 path 为 /web/users/:pk/cancel/       |
 | +response       | object  | 定义返回值                           | { "code": 200,"json": { "message": "success" } } |
 | apis            | array   | 定义其他普通接口                     |                                                  |
 | +path           | string  | 定义接口 path                        |
@@ -173,7 +173,7 @@ Options:
 
 #### pk_field
 
-定义 `rows` 列表数据的主键，默认为 `id`。详情接口中 `<pk>` 值与该字段值匹配。
+定义 `rows` 列表数据的主键，默认为 `id`。详情接口中 `pk` 值与该字段值匹配。
 
 请求 `GET /web/users/1/` 则是返回 `rows` 中数据 `id=1` 的记录。
 
@@ -299,7 +299,7 @@ curl "http://0.0.0.0:3001/web/users/?is_active=1&ordering=-id&city__name=anhui&s
 }
 ```
 
-### 创建记录
+#### 创建记录
 
 ```shell
 curl -XPOST "http://0.0.0.0:3001/web/users/" -H "Content-Type: application/json" -d '{"username":"test"}'
@@ -314,7 +314,7 @@ curl -XPOST "http://0.0.0.0:3001/web/users/" -H "Content-Type: application/json"
 }
 ```
 
-### 修改接口
+#### 修改接口
 
 ```shell
 curl -XPATCH "http://0.0.0.0:3001/web/users/6/" -H "Content-Type: application/json" -d '{"username":"test2"}'
@@ -329,7 +329,7 @@ curl -XPATCH "http://0.0.0.0:3001/web/users/6/" -H "Content-Type: application/js
 }
 ```
 
-### 详情接口
+#### 详情接口
 
 ```shell
 curl "http://0.0.0.0:3001/web/users/6/"
@@ -344,7 +344,7 @@ curl "http://0.0.0.0:3001/web/users/6/"
 }
 ```
 
-### 删除接口
+#### 删除接口
 
 ```shell
 curl -XDELETE "http://0.0.0.0:3001/web/users/6/"
