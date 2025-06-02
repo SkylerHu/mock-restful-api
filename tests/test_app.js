@@ -103,3 +103,21 @@ describe("test app set prefix", () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe("test app delay", () => {
+  beforeAll(() => {
+    // 加载配置
+    initJsonFiles("fixtures");
+    global.app = initApp({ delay: 10 });
+  });
+  afterAll(() => {
+    global.jsonConfig = {};
+  });
+  test("test delay", async () => {
+    let res;
+    res = await request(global.app).put("/web/info/");
+    expect(res.status).toBe(200);
+    res = await request(global.app).get("/web/enums/");
+    expect(res.status).toBe(200);
+  });
+});

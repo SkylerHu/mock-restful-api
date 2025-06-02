@@ -7,6 +7,7 @@
 
 常用命令：
 - 安装依赖 `npm install .`
+- 运行开发测试 `npm run start`
 - 测试用例 `npm run test`
 - 发版 `npm publish` 直接使用 `src` 目录下的文件发版
 

@@ -6,7 +6,7 @@ const logger = require("./logger.js");
 const { initRestfulResponse } = require("./handler.js");
 
 const initApp = option => {
-  const { prefix = "/" } = option || {};
+  const { prefix = "/", delay = 0 } = option || {};
 
   const app = express();
 
@@ -30,13 +30,21 @@ const initApp = option => {
       const _path = pathJoin("/", prefix, reqPath);
 
       logger.debug(`app add route  ${_method.padEnd(8, " ")} ${_path}`);
-      app[_method](_path, (req, res) => {
+      app[_method](_path, async(req, res) => {
         let respConf = response || {};
         if (restful) {
           // 处理restful接口
           respConf = initRestfulResponse(req, filePath, route);
         }
-        const { code = 200, headers, json, file, text = null } = respConf;
+        const { code = 200, headers, json, file, text = null, delay: respDelay = 0 } = respConf;
+        // 处理是否延迟响应
+        let delayTime = respDelay;
+        if (delayTime <= 0 && delay > 0) {
+          delayTime = Math.floor(Math.random() * delay);
+        }
+        if (delayTime > 0) {
+          await new Promise(resolve => setTimeout(resolve, delayTime));
+        }
         // 处理 headers
         for (let key in headers) {
           res.set(key, headers[key]);
