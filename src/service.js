@@ -14,12 +14,13 @@ program
   .option("--path <string>", "mock数据文件的路径/目录，mock json file path", "fixtures")
   .option("--prefix <string>", "接口path的前缀，api path prefix", "/")
   .option("--ignore_watch", "忽略监听path参数目录下文件变动而重启服务，ignore watch path for reload app", false)
+  .option("--delay <number>", "延迟响应时间(ms)，在[0,delay]之间随机延迟，mock service's delay time", 0)
   .option("-l --level <string>", "日志级别: debug/info/notice/warn/error", "debug");
 program.parse();
 
-const { path: filePath, ignore_watch: ignoreWatch, port, prefix, level, host } = program.opts();
+const { path: filePath, ignore_watch: ignoreWatch, port, prefix, level, host, delay } = program.opts();
 
-const env = { ...process.env, path: filePath, port, prefix, level, host };
+const env = { ...process.env, path: filePath, port, prefix, level, host, delay };
 
 let child;
 

@@ -34,10 +34,11 @@ Usage: mock-restful-api [options]
 
 Options:
   -p, --port <number>  mock服务端口，mock service's port number (default: 3001)
-  --host <string>      mock服务监听的IP地址，mock service's IP (default: "0.0.0.0")
+  --host <string>      mock服务监听的IP地址，mock service's ip (default: "0.0.0.0")
   --path <string>      mock数据文件的路径/目录，mock json file path (default: "fixtures")
   --prefix <string>    接口path的前缀，api path prefix (default: "/")
   --ignore_watch       忽略监听path参数目录下文件变动而重启服务，ignore watch path for reload app (default: false)
+  --delay <number>     延迟响应时间(ms)，在[0,delay]之间随机延迟，mock service's delay time (default: 0)
   -l --level <string>  日志级别: debug/info/notice/warn/error (default: "debug")
   -h, --help           display help for command
 ```
@@ -64,7 +65,7 @@ Options:
 | actions         | array   | 基于 restful 定义的其他操作          |                                                  |
 | +method         | string  | 请求方法, GET/POST 等                |                                                  |
 | +url_path       | string  | action 路径                          | eg: "cancel"，则 path 为 /web/users/cancel/      |
-| +detail         | bool    | 是否是详情 action，默认 false        | 为 true 时 path 为 /web/users/:pk/cancel/       |
+| +detail         | bool    | 是否是详情 action，默认 false        | 为 true 时 path 为 /web/users/:pk/cancel/        |
 | +response       | object  | 定义返回值                           | { "code": 200,"json": { "message": "success" } } |
 | apis            | array   | 定义其他普通接口                     |                                                  |
 | +path           | string  | 定义接口 path                        |
@@ -253,13 +254,14 @@ actions 是对 restful 的扩展，依赖 `restful` 的定义，示例：
 
 `actions` 和 `apis` 中的配置格式一样，接口都按照配置的数据返回结果。
 
-| 字段    | 类型    | 说明                   | 举例                                                |
-| ------- | ------- | ---------------------- | --------------------------------------------------- |
-| code    | intrger | 定义返回状态码         | 默认值 200                                          |
-| headers | object  | 定义返回 Header 键值对 | {"Content-Type": "image/png"}                       |
-| json    | any     | 定义返回的 json 数据   |                                                     |
-| text    | string  | 定义返回的文本数据     |                                                     |
-| file    | string  | 定义实现下载文件       | 配置文件相对(当前运行路径)/绝对路径, eg: ./test.jpg |
+| 字段    | 类型    | 说明                                         | 举例                                                |
+| ------- | ------- | -------------------------------------------- | --------------------------------------------------- |
+| code    | intrger | 定义返回状态码                               | 默认值 200                                          |
+| headers | object  | 定义返回 Header 键值对                       | {"Content-Type": "image/png"}                       |
+| json    | any     | 定义返回的 json 数据                         |                                                     |
+| text    | string  | 定义返回的文本数据                           |                                                     |
+| file    | string  | 定义实现下载文件                             | 配置文件相对(当前运行路径)/绝对路径, eg: ./test.jpg |
+| delay   | int     | 支持单个接口写死一个 delay 延迟返回，单位 ms |                                                     |
 
 ## 3. 接口请求示例
 

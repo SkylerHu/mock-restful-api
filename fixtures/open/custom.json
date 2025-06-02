@@ -14,6 +14,7 @@
       "path": "web/info/",
       "response": {
         "code": 200,
+        "delay": 10,
         "text": "success",
         "headers": {}
       }
