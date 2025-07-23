@@ -116,6 +116,7 @@ describe("test handle restfule api", () => {
     expect(handler.compareValueByLookup(1, LookupEnum.RANGE, ",")).toBeTruthy();
     expect(handler.compareValueByLookup([0], LookupEnum.RANGE, ",")).toBeFalsy();
     expect(() => handler.compareValueByLookup(1, LookupEnum.RANGE, "0,2,4")).toThrow(/range value must be an array of length 2/);
+    expect(handler.compareValueByLookup([0], LookupEnum.CSV, ",")).toBeFalsy();
     // lt
     expect(handler.compareValueByLookup(1, LookupEnum.LT, 2)).toBeTruthy();
     expect(handler.compareValueByLookup("1", LookupEnum.LT, 2)).toBeTruthy();

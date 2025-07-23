@@ -146,6 +146,7 @@ const compareValueByLookup = (value, lookup, targetValue) => {
       success = utils.isString(value) && value.match(new RegExp(targetValue));
       break;
     }
+    case LookupEnum.CSV:
     case LookupEnum.RANGE: {
       if (!utils.allowCompareRange(value)) {
         success = false;
