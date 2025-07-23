@@ -9,6 +9,7 @@ const LookupEnum = new Enum([
   { key: "CONTAINS", value: "contains", label: "内容包含" },
   { key: "REGEX", value: "regex", label: "正则" },
   { key: "RANGE", value: "range", label: "取值范围" },
+  { key: "CSV", value: "csv", label: "取值范围" },
   { key: "LT", value: "lt", label: "小于" },
   { key: "LTE", value: "lte", label: "小于等于" },
   { key: "GT", value: "gt", label: "大于" },
